@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PAPER_FIGURE_2_SHA256 = (
+FRAMEWORK_FIGURE_SHA256 = (
     "4467f569750c110d0d86750ffc61fa7e16f13fac683bd643df55a6ca308225e7"
 )
 
@@ -15,18 +15,31 @@ def test_readme_presents_the_governed_agent_workflow_figure():
     assert "framework prepared by the authors" in readme
 
 
-def test_release_uses_the_exact_paper_figure_2():
+def test_readme_presents_the_validated_interface_walkthrough():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    screenshots = [
+        "ui-conversation-task-center.png",
+        "ui-initial-champion-registered.png",
+        "ui-expert-failure-slice-review.png",
+    ]
+    for filename in screenshots:
+        assert f"docs/assets/{filename}" in readme
+        assert (ROOT / "docs" / "assets" / filename).is_file()
+    assert "https://huggingface.co/datasets/LotusRosa/BFD-ML-4K" in readme
+
+
+def test_release_uses_the_exact_author_framework_figure():
     figure = ROOT / "docs" / "assets" / "human-governed-agent-framework.png"
     digest = hashlib.sha256(figure.read_bytes()).hexdigest()
-    assert digest == PAPER_FIGURE_2_SHA256
+    assert digest == FRAMEWORK_FIGURE_SHA256
     assert not (ROOT / "docs" / "assets" / "agent-governed-workflow.svg").exists()
 
 
-def test_asset_provenance_identifies_the_unmodified_paper_figure():
+def test_asset_provenance_identifies_the_unmodified_framework_figure():
     provenance = (ROOT / "docs" / "assets" / "README.md").read_text(
         encoding="utf-8"
     )
-    assert "Figure 2" in provenance
+    assert "framework" in provenance.lower()
     assert "unmodified" in provenance.lower()
 
 

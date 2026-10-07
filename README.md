@@ -9,6 +9,8 @@ engineer's final `Retain` or `Promote` decision in one auditable workflow.
 This repository contains research software. It is not a substitute for a
 professional facade inspection, engineering diagnosis, or safety decision.
 
+Companion dataset: [BFD-ML-4K on Hugging Face](https://huggingface.co/datasets/LotusRosa/BFD-ML-4K).
+
 <p align="center">
   <img src="docs/assets/human-governed-agent-framework.png" alt="Human-governed Building-Facade Engineering Agent framework" width="100%">
 </p>
@@ -52,6 +54,41 @@ Create project
 The Agent never promotes a model automatically. `Retain` keeps the current
 Champion. `Promote` makes the evaluated Challenger the Active Champion while
 preserving prior model versions for rollback.
+
+## Interface walkthrough
+
+The screenshots below were captured during the v2.1.0 validation workflow.
+They illustrate the shared conversation-and-Task-Panel interface; project data
+and model artifacts remain local to the engineer's machine.
+
+### Conversation-first project entry
+
+<p align="center">
+  <img src="docs/assets/ui-conversation-task-center.png" alt="Conversation Task Center and Task Panel entry points" width="100%">
+</p>
+
+The conversation surface handles intent and guidance, while the Task Panel
+opens for controlled local actions such as file selection, review, and human
+confirmation.
+
+### Registered Initial Champion
+
+<p align="center">
+  <img src="docs/assets/ui-initial-champion-registered.png" alt="Initial Champion registration and maintenance batch creation" width="100%">
+</p>
+
+Verified model identity, training profile, checkpoint hash, and result bundle
+hash are recorded before recurring maintenance begins.
+
+### Expert review of Failure Slices
+
+<p align="center">
+  <img src="docs/assets/ui-expert-failure-slice-review.png" alt="Expert review of model Failure Slices" width="100%">
+</p>
+
+Engineers accept, trim, or reject candidate Failure Slices before any
+Challenger job is frozen. The Agent records the decision without replacing
+expert judgment.
 
 ## Requirements
 

@@ -13,6 +13,7 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/LotusRosa/building-facade-engineering-agent"
 Repository = "https://github.com/LotusRosa/building-facade-engineering-agent"
+Dataset = "https://huggingface.co/datasets/LotusRosa/BFD-ML-4K"
 
 [project.scripts]
 facade-agent = "facade_agent.__main__:main"
