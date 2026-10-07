@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: >-
+  If you use the Building-Facade Engineering Agent, cite the software by name,
+  version, release year, authors, and canonical repository.
+title: "Building-Facade Engineering Agent"
+type: software
+repository-code: "https://github.com/LotusRosa/building-facade-engineering-agent"
+url: "https://github.com/LotusRosa/building-facade-engineering-agent"
+authors:
+  - family-names: "Xia"
+    given-names: "Yu"
+  - family-names: "Chen"
+    given-names: "Ruoyu"
+contact:
+  - family-names: "Chen"
+    given-names: "Ruoyu"
+    email: "chenruoyu@just.edu.cn"
+version: 2.1.0
+date-released: 2026-10-07
+keywords:
+  - building facade
+  - engineering agent
+  - continual model maintenance
+  - human-governed AI
+  - UAV inspection

@@ -1,0 +1,121 @@
+Building-Facade Engineering Agent Academic Research License 1.0
+
+Copyright (c) 2026 Yu Xia and Ruoyu Chen.
+All rights reserved.
+
+Official repository:
+https://github.com/LotusRosa/building-facade-engineering-agent
+
+This license governs the first-party source code, executable code,
+documentation, protocols, and other materials distributed as part of the
+Building-Facade Engineering Agent (collectively, the "Software"). By using,
+copying, or modifying the Software, you agree to the following terms.
+
+1. Research-only license grant
+
+Subject to continued compliance with this license, the copyright holders grant
+you a limited, non-exclusive, non-transferable, non-sublicensable, worldwide,
+royalty-free license to download, install, run, study, reproduce, and modify the
+Software solely for non-commercial academic or scientific research.
+
+Modifications and copies may be used only internally by you and members of the
+same non-commercial research project who are each bound by these terms.
+
+2. Non-commercial restriction
+
+The Software may not be used for commercial purposes. Prohibited commercial
+uses include, without limitation:
+
+  a. use in or for a commercial product, service, hosted service, or paid
+     consulting engagement;
+  b. use by or on behalf of a for-profit entity for internal research,
+     product development, operational decision-making, or other commercial
+     advantage;
+  c. use that generates revenue, supports revenue-generating activity, or is
+     intended to lead directly to commercial deployment; and
+  d. sale, rental, licensing, sublicensing, or other commercial exploitation of
+     the Software or any modified version.
+
+Commercial use requires a separate written license from the copyright holders.
+
+3. No redistribution or re-hosting
+
+Without prior written permission from the copyright holders, you may not
+redistribute, publish, re-host, mirror, sublicense, or otherwise make available
+the Software, any modified version, or any substantial portion of either. You
+may not offer the Software or a modified version as a service for use by third
+parties.
+
+Every permitted internal copy must retain this license and all copyright,
+attribution, and provenance notices.
+
+4. Mandatory citation and attribution
+
+Every publication, preprint, thesis, dissertation, technical report,
+presentation, public benchmark, public demonstration, or other public research
+output that uses or is derived from the Software must clearly:
+
+  a. cite the Building-Facade Engineering Agent using the citation specified in
+     the official repository README, including the authors, Software name,
+     version, year, and official repository URL.
+
+The citation must appear in the main references or acknowledgements and may not
+be replaced by a generic acknowledgement. Publicly described modified versions
+must also state that they are modified and are not official releases.
+
+5. Research outputs and user materials
+
+This license does not claim ownership of data, labels, model weights, reports,
+or other materials supplied or created by a user. Subject to applicable law and
+third-party rights, research results may be published if they do not contain or
+redistribute the Software, a modified version, or a substantial portion of
+either. This license does not grant permission to use or distribute any dataset,
+model, or other material that is governed by separate terms.
+
+6. Third-party materials
+
+Third-party libraries, pretrained weights, datasets, models, and other external
+materials are not licensed under this license. They remain subject to their own
+licenses and terms. You are responsible for identifying and complying with
+those terms.
+
+7. No trademark or endorsement rights
+
+This license does not grant permission to use the names, logos, or trademarks
+of the Building-Facade Engineering Agent, its authors, or their institutions,
+except as strictly necessary to provide the citation required by Section 4.
+Your use must not imply endorsement, certification, or affiliation.
+
+8. Termination
+
+Your rights under this license terminate automatically upon breach. On
+termination, you must immediately stop using the Software and delete all copies
+and modifications in your possession or control. Sections 4 through 11 survive
+termination.
+
+9. Disclaimer of warranty
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT,
+ACCURACY, OR SAFETY. THE SOFTWARE IS RESEARCH SOFTWARE AND IS NOT A SUBSTITUTE
+FOR PROFESSIONAL ENGINEERING INSPECTION, DIAGNOSIS, OR JUDGMENT.
+
+10. Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDERS, AUTHORS, AND
+CONTRIBUTORS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES, OR FOR ANY LOSS OF DATA, PROFITS, REVENUE,
+BUSINESS, OR USE, ARISING FROM OR RELATED TO THE SOFTWARE OR THIS LICENSE,
+REGARDLESS OF THE THEORY OF LIABILITY AND EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+11. General
+
+No right or license is granted except as expressly stated in this license. If a
+provision is held unenforceable, it will be limited or removed to the minimum
+extent necessary, and the remaining provisions will remain in effect. A waiver
+of one breach is not a waiver of any other breach.
+
+For commercial licensing, redistribution permission, or other authorization,
+contact the copyright holders through the official project repository.

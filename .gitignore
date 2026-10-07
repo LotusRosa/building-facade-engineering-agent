@@ -1,0 +1,36 @@
+# Python and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local environments and build output
+.venv/
+venv/
+build/
+dist/
+github_ready/
+
+# Agent runtime state and generated artifacts
+data/
+models/
+projects/
+inbox/
+exports/
+artifact_store/
+audit/
+trash/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Secrets and local configuration
+.env
+.env.*
+credentials.json
+secrets.json
+*.key
+*.pem

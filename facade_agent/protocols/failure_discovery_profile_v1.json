@@ -1,0 +1,28 @@
+{
+  "profile_id": "champion_failure_discovery_convnext_consensus_v1",
+  "task": "image_level_multilabel_failure_discovery",
+  "input_size": 768,
+  "threshold_source": "active_champion_frozen_registry",
+  "threshold_retuning": false,
+  "feature_source": "active_champion_convnext_encoder_full_image_768d",
+  "projection": {
+    "l2_normalize_before_pca": true,
+    "pca_components_max": 32,
+    "l2_normalize_after_pca": true
+  },
+  "clustering": {
+    "algorithm": "three_run_kmeans_coassociation_average_link_consensus",
+    "runs": 3,
+    "kmeans_n_init_per_run": 20,
+    "cluster_seed": 20260907,
+    "min_failures_per_class_error_pool": 12,
+    "min_cluster_size": 6,
+    "max_clusters": 6,
+    "min_silhouette": 0.08,
+    "min_mean_pairwise_ari": 0.6,
+    "stable_member_coassociation": 0.6666666666666666
+  },
+  "discovery_passes_per_frozen_batch": 1,
+  "automatic_reclustering": false,
+  "result_requires_expert_review": true
+}

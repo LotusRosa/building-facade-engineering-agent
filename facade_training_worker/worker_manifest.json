@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "worker_version": "1.0.0",
+  "worker_protocol_version": 1,
+  "phase": "5_COMPLETE",
+  "python_major_minor": "3.12",
+  "minimum_visible_gpus": 1,
+  "minimum_gpu_memory_gib": 5,
+  "minimum_compute_capability": [7, 0],
+  "dependencies": {
+    "torch": "2.6.0",
+    "torchvision": "0.21.0",
+    "numpy": "1.26.4",
+    "scikit-learn": "1.5.1",
+    "Pillow": "10.4.0"
+  },
+  "pretrained_assets": {
+    "convnext_tiny_imagenet1k_v1": {
+      "provider": "torchvision",
+      "weights": "ConvNeXt_Tiny_Weights.IMAGENET1K_V1",
+      "environment_managed": true,
+      "readiness_gate": false
+    }
+  },
+  "pipelines": {
+    "initial_champion": true,
+    "champion_failure_discovery": true,
+    "challenger_update": true,
+    "champion_challenger_evaluation": true
+  }
+}

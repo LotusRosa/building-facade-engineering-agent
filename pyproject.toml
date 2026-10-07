@@ -1,0 +1,30 @@
+[project]
+name = "facade-model-maintenance-agent"
+version = "2.1.0"
+description = "Building-Facade Engineering Agent: conversation-first governed visual model maintenance for civil engineers"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Yu Xia"},
+  {name = "Ruoyu Chen", email = "chenruoyu@just.edu.cn"},
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/LotusRosa/building-facade-engineering-agent"
+Repository = "https://github.com/LotusRosa/building-facade-engineering-agent"
+
+[project.scripts]
+facade-agent = "facade_agent.__main__:main"
+facade-worker-prepare = "facade_training_worker.prepare_assets:main"
+facade-sample-import = "facade_agent.sample_import:main"
+
+[tool.setuptools]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+
+[tool.setuptools.packages.find]
+include = ["facade_agent*", "facade_training_worker*"]
+
+[tool.setuptools.package-data]
+facade_agent = ["static/*", "protocols/*.json", "adapters/storage/migrations/*.sql"]
+facade_training_worker = ["worker_manifest.json", "requirements.lock"]

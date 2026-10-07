@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Building-Facade Engineering Agent</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Building-Facade Engineering Agent">
+      <span class="brand-icon"><i></i><i></i><i></i></span>
+      <span><strong>Building-Facade Engineering Agent</strong></span>
+    </a>
+    <div id="gpu-queue-banner" class="gpu-queue-banner" role="status" aria-live="polite"></div>
+    <div class="top-state"><span class="online-dot"></span><span data-i18n="local_mode">本地模式</span><b id="state-badge">EMPTY</b></div>
+    <div class="top-actions"><button id="environment-button" class="ghost-button" type="button" data-i18n="environment_settings">环境配置</button><button id="llm-settings-button" class="ghost-button" type="button" data-i18n="connect_model">接入模型</button><button id="language-button" class="ghost-button" type="button">EN</button></div>
+  </header>
+
+  <aside class="sidebar">
+    <section class="conversation-history-head">
+      <span class="eyebrow" data-i18n="local_history">本地历史</span>
+      <h1 data-i18n="local_conversations">对话记录</h1>
+      <p data-i18n="local_history_intro">聊天详情只保存在当前电脑。</p>
+    </section>
+    <div id="conversation-history" class="conversation-history" aria-live="polite"></div>
+    <button id="workflow-settings-button" class="sidebar-settings-button" type="button" aria-controls="workflow-drawer" aria-expanded="false"><span>☷</span><span data-i18n="project_workflow">项目流程</span></button>
+  </aside>
+
+  <aside id="workflow-drawer" class="workflow-drawer" aria-hidden="true">
+    <div class="workflow-drawer-head"><div><span class="eyebrow" data-i18n="project_workflow">项目流程</span><h2 data-i18n="workflow_panel">项目工作流</h2></div><button id="workflow-close" class="workspace-close" type="button" aria-label="Close">×</button></div>
+    <section class="workflow-project-context"><span class="eyebrow" data-i18n="project">项目</span><h3 id="project-title" data-i18n="no_project">尚未创建项目</h3><div id="class-chips" class="chips"></div><div id="model-storage-status" class="model-storage-status" hidden></div></section>
+    <nav class="workflow" aria-label="Workflow"><span class="eyebrow" data-i18n="workflow">工作流</span><ol id="workflow-list"></ol></nav>
+    <section class="trust-card"><div class="section-row"><span class="eyebrow" data-i18n="governance">治理</span><span id="audit-indicator" class="audit-good">●</span></div><strong data-i18n="human_control">关键决策由工程师确认</strong><p data-i18n="audit_copy">训练、标签版本和模型决策都保留本地审计记录。</p><button id="verify-audit" class="text-button" type="button" data-i18n="verify_audit">验证审计链</button></section>
+  </aside>
+  <button id="workflow-scrim" class="workflow-scrim" type="button" aria-label="Close workflow settings" tabindex="-1"></button>
+
+  <main id="advanced-workspace" class="workspace" aria-hidden="true">
+    <div class="workspace-head">
+      <div><span class="eyebrow" data-i18n="current_task">当前任务</span><h2 id="task-title">—</h2><small class="workspace-hint" data-i18n="workspace_hint">仅在 Agent 请求上传、审核或人工确认时使用。</small></div>
+      <div class="workspace-tools">
+        <span class="phase-badge">AGENT 2.1 · COMPLETE</span>
+        <button id="task-view-button" class="ghost-button active" type="button" data-i18n="workspace_view">人工操作</button>
+        <button id="history-view-button" class="ghost-button" type="button" data-i18n="history_view">项目记录</button>
+        <button id="workspace-close" class="workspace-close" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div id="workspace-content" class="workspace-content"></div>
+  </main>
+  <button id="workspace-scrim" class="workspace-scrim" type="button" aria-label="Close advanced workspace" tabindex="-1"></button>
+
+  <aside class="agent-panel">
+    <div class="agent-head">
+      <div class="agent-avatar">BF</div>
+      <div><span class="eyebrow" data-i18n="conversation_center">对话任务中心</span><strong>Building-Facade Engineering Agent</strong><small id="llm-status" data-i18n="controlled_assistant">受状态约束的本地助手</small></div>
+    </div>
+    <div id="agent-messages" class="agent-messages" aria-live="polite"></div>
+    <div id="agent-suggestions" class="suggestions"></div>
+    <form id="agent-form" class="agent-form">
+      <textarea id="agent-input" rows="3" data-i18n-placeholder="ask_placeholder" placeholder="询问当前步骤或数据要求…"></textarea>
+      <button class="primary-button" type="submit" data-i18n="send">发送</button>
+    </form>
+  </aside>
+  <button id="advanced-button" class="advanced-button" type="button" aria-controls="advanced-workspace" aria-expanded="false"><span>⚙</span><span data-i18n="advanced_settings">任务面板</span></button>
+</div>
+
+<dialog id="confirm-dialog">
+  <form method="dialog" class="dialog-card">
+    <span class="eyebrow" data-i18n="human_confirmation">人工确认</span>
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-copy"></p>
+    <div class="form-actions">
+      <button class="ghost-button" value="cancel" data-i18n="cancel">取消</button>
+      <button id="confirm-yes" class="primary-button" value="default" data-i18n="confirm">确认</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delete-project-dialog">
+  <form id="delete-project-form" class="dialog-card">
+    <span class="eyebrow" data-i18n="delete_project">删除项目</span>
+    <h3 id="delete-project-title"></h3>
+    <p data-i18n="delete_project_warning">这会删除项目的对话、数据集、标签、模型和运行记录。本地文件会移入可恢复的回收目录；最小审计存根会保留以维持审计链完整。</p>
+    <label class="field"><span id="delete-project-prompt"></span><input id="delete-project-name" autocomplete="off" required></label>
+    <div class="form-actions">
+      <button id="delete-project-cancel" class="ghost-button" type="button" data-i18n="cancel">取消</button>
+      <button id="delete-project-submit" class="primary-button danger-button" type="submit" disabled data-i18n="delete_project_confirm">永久删除项目</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="llm-dialog">
+  <form id="llm-form" class="dialog-card">
+    <span class="eyebrow" data-i18n="model_connection">模型连接</span>
+    <h3 data-i18n="model_settings">模型设置</h3>
+    <p data-i18n="model_privacy">密钥只保存在当前本机进程内存中，不写入数据库或浏览器存储。</p>
+    <label class="field"><span data-i18n="connection_mode">连接模式</span><select id="llm-mode"><option value="disabled" data-i18n="disabled_mode">无模型回退</option><option value="openai_compatible">OpenAI-compatible</option></select></label>
+    <label class="field"><span data-i18n="model_provider">服务商预设</span><select id="llm-provider"></select></label>
+    <label class="field"><span>Base URL</span><input id="llm-base-url" value="https://api.openai.com/v1" autocomplete="off"></label>
+    <label class="field"><span data-i18n="model_name">模型名称</span><input id="llm-model" placeholder="e.g. your-model-name" autocomplete="off"></label>
+    <label class="field"><span>API Key</span><input id="llm-api-key" type="password" placeholder="sk-... (optional for local model)" autocomplete="new-password"></label>
+    <label class="field"><span data-i18n="api_protocol">接口协议</span><select id="llm-protocol"><option value="responses">Responses API</option><option value="chat_completions">Chat Completions (local-compatible)</option></select></label>
+    <div id="llm-verification" class="connection-state" data-i18n="connection_untested">尚未测试连接</div>
+    <div class="form-actions"><button id="llm-cancel" class="ghost-button" type="button" data-i18n="cancel">取消</button><button id="llm-test" class="ghost-button" type="button" data-i18n="test_connection">测试连接</button><button id="llm-connect" class="primary-button" type="submit" data-i18n="connect" disabled>连接</button></div>
+  </form>
+</dialog>
+
+<dialog id="environment-dialog">
+  <form id="environment-form" class="dialog-card environment-dialog-card">
+    <span class="eyebrow" data-i18n="computer_environment">计算环境</span>
+    <h3 data-i18n="environment_settings">环境配置</h3>
+    <p data-i18n="environment_intro">Agent 自动检查当前电脑；缺少依赖时只在工程师确认后准备运行环境。</p>
+    <div id="environment-summary" class="environment-summary"></div>
+    <label class="field"><span data-i18n="compute_mode">训练执行方式</span><select id="compute-mode"><option value="auto" data-i18n="compute_auto">自动选择</option><option value="local_gpu" data-i18n="compute_local_gpu">本机 NVIDIA GPU</option></select></label>
+    <label class="field"><span data-i18n="cpu_threads">CPU 线程上限（0 为自动）</span><input id="cpu-threads" type="number" min="0" value="0"></label>
+    <div id="gpu-device-list" class="gpu-device-list"></div>
+    <div class="notice" data-i18n="environment_safety">环境脚本会安装锁定依赖并下载校验过的预训练权重；只有点击准备运行环境并确认后才会执行。</div>
+    <div class="form-actions"><button id="environment-bootstrap" class="ghost-button" type="button">准备运行环境</button><button id="environment-cancel" class="ghost-button" type="button" data-i18n="cancel">取消</button><button class="primary-button" type="submit" data-i18n="save_environment">保存配置</button></div>
+  </form>
+</dialog><div id="toast" class="toast" role="status"></div>
+<script src="/app.js"></script>
+</body>
+</html>

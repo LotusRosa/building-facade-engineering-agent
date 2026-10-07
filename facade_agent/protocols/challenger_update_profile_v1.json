@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "profile_id": "challenger_convnext_tiny_768_balanced_replay_v2",
+  "task": "image_level_multilabel_classification",
+  "label_semantics": "per_image_logical_union",
+  "parent_initialization": "active_champion_checkpoint",
+  "backbone": "convnext_tiny",
+  "input_size": 768,
+  "seeds": [20260921, 20260922, 20260923],
+  "optimizer": "adamw",
+  "learning_rate": 0.00001,
+  "weight_decay": 0.01,
+  "batch_size_per_gpu": 1,
+  "gradient_accumulation_steps": 4,
+  "data_loader_workers_per_rank": 2,
+  "mixed_precision": "auto_bf16_or_fp16",
+  "max_gradient_norm": 1.0,
+  "positive_weight_cap": 20.0,
+  "development_fraction": 0.2,
+  "split_seed": 20260920,
+  "development_split_strategy": "deterministic_iterative_multilabel_v1_over_frozen_bundle_images",
+  "primary_selection_metric": "development_macro_map",
+  "epochs": 5,
+  "draws_per_epoch": {
+    "expert_confirmed_failure": 160,
+    "remaining_new": 160,
+    "history_replay": 320,
+    "total": 640
+  },
+  "sampling": {
+    "with_replacement_when_required": true,
+    "failure_pool": "balanced_round_robin_across_accepted_or_trimmed_slices",
+    "remaining_new_pool": "seeded_shuffled_cycle_over_current_batch_images_not_retained_by_failure_review",
+    "history_replay_pool": "seeded_shuffled_cycle_over_all_frozen_prior_datasets",
+    "draw_manifests": "frozen_per_seed_before_training"
+  },
+  "history_eligibility": {
+    "initial_training": "frozen",
+    "prior_maintenance": "frozen_and_terminal_deployed_or_held",
+    "current_batch_excluded": true
+  },
+  "threshold_calibration": "development_only_after_training",
+  "test_usage": "never_read_during_update_training",
+  "hardware_target": "local_cuda_single_gpu_worker",
+  "notes": "Formal V9 fixed-mixture update preset. The LLM and UI cannot alter any field."
+}

@@ -1,0 +1,33 @@
+{
+  "profile_id": "champion_challenger_cumulative_core_safety_v3",
+  "task": "image_level_multilabel_paired_model_evaluation",
+  "input_size": 768,
+  "required_split_policy": {
+    "current": "exactly_one_current_gate",
+    "history": "all_active_cohorts_plus_current_core_safety_addition",
+    "assembly": "backend_emits_current_gate_and_core_safety_only"
+  },
+  "threshold_source": "each_model_frozen_registry",
+  "threshold_retuning": false,
+  "metrics": [
+    "macro_map",
+    "macro_f1",
+    "micro_f1",
+    "exact_match_accuracy",
+    "per_class_precision",
+    "per_class_recall",
+    "false_positive_count",
+    "false_negative_count"
+  ],
+  "paired_image_transitions": [
+    "both_correct",
+    "champion_only_correct",
+    "challenger_only_correct",
+    "both_wrong"
+  ],
+  "selection_rule": "none_evidence_only",
+  "automatic_deployment": false,
+  "evaluation_data_usage": "current_gate_and_cumulative_core_safety_only",
+  "result_requires_human_retain_or_promote": true,
+  "notes": "Every round evaluates one fresh Current Gate and cumulative Core Safety. Cohort provenance is retained, and evaluation data never enters training."
+}

@@ -1,0 +1,7 @@
+# Phase 5A reference lock. Install PyTorch/torchvision from the approved CUDA
+# wheel index for the workstation, then install the remaining exact versions.
+torch==2.6.0
+torchvision==0.21.0
+numpy==1.26.4
+scikit-learn==1.5.1
+Pillow==10.4.0

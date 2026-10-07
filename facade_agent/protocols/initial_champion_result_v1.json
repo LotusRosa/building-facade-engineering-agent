@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "facade-agent://protocols/initial-champion-result-v1",
+  "title": "Initial Champion local worker result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "worker_protocol_version",
+    "job_id",
+    "run_id",
+    "content_fingerprint",
+    "profile_sha256",
+    "seed_results",
+    "selected_seed",
+    "thresholds",
+    "aggregate_metrics"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "worker_protocol_version": {"const": 1},
+    "job_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "content_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "seed_results": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["seed", "weights_file", "weights_sha256", "metrics"],
+        "properties": {
+          "seed": {"type": "integer"},
+          "weights_file": {"type": "string", "pattern": "^weights/"},
+          "weights_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "metrics": {"type": "object", "minProperties": 1}
+        },
+        "additionalProperties": true
+      }
+    },
+    "selected_seed": {"type": "integer"},
+    "thresholds": {"type": "object", "minProperties": 1},
+    "aggregate_metrics": {"type": "object", "minProperties": 1}
+  },
+  "additionalProperties": true
+}

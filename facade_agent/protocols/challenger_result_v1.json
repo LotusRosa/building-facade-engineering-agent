@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "facade-agent://protocols/challenger-result-v1",
+  "title": "Governed Challenger local worker result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "worker_protocol_version",
+    "job_id",
+    "run_id",
+    "content_fingerprint",
+    "profile_sha256",
+    "parent_champion_model_id",
+    "epochs",
+    "test_read",
+    "training_draws_sha256",
+    "seed_results",
+    "selected_seed",
+    "thresholds",
+    "aggregate_metrics"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "worker_protocol_version": {"const": 1},
+    "job_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "content_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "parent_champion_model_id": {"type": "string", "minLength": 1},
+    "epochs": {"const": 5},
+    "test_read": {"const": false},
+    "training_draws_sha256": {
+      "type": "object",
+      "required": ["20260921", "20260922", "20260923"],
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "seed_results": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["seed", "weights_file", "weights_sha256", "metrics"],
+        "properties": {
+          "seed": {"enum": [20260921, 20260922, 20260923]},
+          "weights_file": {"type": "string", "pattern": "^weights/"},
+          "weights_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "metrics": {
+            "type": "object",
+            "required": ["development_macro_map"],
+            "properties": {"development_macro_map": {"type": "number"}},
+            "additionalProperties": {"type": "number"}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "selected_seed": {"enum": [20260921, 20260922, 20260923]},
+    "thresholds": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
+    "aggregate_metrics": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}}
+  },
+  "additionalProperties": true
+}

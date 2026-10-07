@@ -1,0 +1,109 @@
+{
+  "schema_version": 2,
+  "name": "human_governed_engineering_model_maintenance_agent",
+  "target_user": "civil engineer without deep-learning training experience",
+  "deployment_scope": "local_only",
+  "knowledge_representation": "image-level multi-label presence",
+  "class_definition_authority": "human_engineer",
+  "no_defect_is_mutually_exclusive": true,
+  "precise_localization_claimed": false,
+  "automatic_hyperparameter_search": false,
+  "automatic_deployment": false,
+  "recursive_same_batch_training": false,
+  "project_states": [
+    "PROJECT_CREATED",
+    "TAXONOMY_CONFIRMED",
+    "DATA_IMPORTED",
+    "DATA_VALIDATED",
+    "ANNOTATION_READY",
+    "INITIAL_TRAINING_READY",
+    "CHAMPION_READY",
+    "SCREENING_READY"
+  ],
+  "maintenance_batch_states": [
+    "CREATED",
+    "MAINTENANCE_DATA_IMPORTED",
+    "MAINTENANCE_LABELS_READY",
+    "MAINTENANCE_BATCH_FROZEN",
+    "LABELS_CONFIRMED",
+    "INFERENCE_COMPLETED",
+    "FAILURE_DISCOVERY_COMPLETED",
+    "FAILURE_REVIEW_COMPLETED",
+    "CHALLENGER_TRAINED",
+    "CHALLENGER_EVALUATED",
+    "DECISION_PENDING",
+    "DEPLOYED",
+    "HELD"
+  ],
+  "formal_v9_update_draws": {
+    "expert_confirmed_failure": 160,
+    "remaining_new": 160,
+    "history_replay": 320,
+    "total": 640,
+    "epochs": 5
+  },
+  "challenger_job_profile": {
+    "profile_id": "challenger_convnext_tiny_768_balanced_replay_v2",
+    "parent": "active_champion_used_for_failure_discovery",
+    "seeds": [20260921, 20260922, 20260923],
+    "input_size": 768,
+    "epochs": 5,
+    "draws_per_epoch": {
+      "expert_confirmed_failure": 160,
+      "remaining_new": 160,
+      "history_replay": 320,
+      "total": 640
+    },
+    "history_pool": "all frozen initial data plus frozen terminal prior maintenance batches",
+    "with_replacement_when_pool_is_small": true,
+    "llm_parameter_override": false,
+    "ui_parameter_override": false,
+    "test_read": false
+  },
+  "failure_discovery_profile": {
+    "profile_id": "champion_failure_discovery_convnext_consensus_v1",
+    "feature": "active Champion ConvNeXt full-image encoder feature",
+    "threshold_source": "active Champion frozen registry",
+    "threshold_retuning": false,
+    "normalization": "L2 before and after PCA",
+    "reduction": "PCA up to 32 dimensions",
+    "base_clustering": "exactly three independent K-Means runs with 20 internal starts each",
+    "consensus": "co-association matrix",
+    "final_clustering": "average-link agglomerative clustering",
+    "discovery_passes_per_frozen_batch": 1,
+    "automatic_reclustering": false,
+    "expert_review_required": true
+  },
+  "failure_review_protocol": {
+    "decision_authority": "single_domain_expert",
+    "actions": ["accept", "trim", "reject"],
+    "trim_scope": "verified_slice_members_only",
+    "all_slices_must_be_reviewed_before_freeze": true,
+    "labels_may_be_modified": false,
+    "automatic_reclustering": false,
+    "immutable_review_version": true,
+    "separate_freeze_confirmation": true
+  },
+  "expert_slice_actions": ["accept", "trim", "reject"],
+  "deployment_actions": ["deploy", "hold"],
+  "deployment_authority": "human_engineer",
+  "deployment_reason_required": true,
+  "one_formal_decision_per_maintenance_batch": true,
+  "llm_role": [
+    "intent_understanding",
+    "tool_request_proposal",
+    "workflow_explanation",
+    "result_summary"
+  ],
+  "deterministic_backend_role": [
+    "validation",
+    "inference",
+    "clustering",
+    "training",
+    "metrics",
+    "registry",
+    "audit"
+  ],
+  "evaluation_cohort_isolation": "training_and_evaluation_cohorts_are_disjoint"
+}
+

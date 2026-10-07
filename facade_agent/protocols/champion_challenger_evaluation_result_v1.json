@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "facade-agent://protocols/champion-challenger-evaluation-result-v1",
+  "title": "Champion-Challenger independent holdout evaluation result",
+  "type": "object",
+  "required": [
+    "schema_version", "worker_protocol_version", "job_id", "run_id",
+    "content_fingerprint", "profile_sha256", "champion_model_id",
+    "challenger_model_id", "predictions_file", "predictions_sha256", "test_read"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "worker_protocol_version": {"const": 1},
+    "job_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "content_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "champion_model_id": {"type": "string", "minLength": 1},
+    "challenger_model_id": {"type": "string", "minLength": 1},
+    "predictions_file": {"const": "predictions.jsonl"},
+    "predictions_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "test_read": {"const": false}
+  },
+  "additionalProperties": true
+}

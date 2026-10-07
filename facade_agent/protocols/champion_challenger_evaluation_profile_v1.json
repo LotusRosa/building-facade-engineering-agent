@@ -1,0 +1,33 @@
+{
+  "profile_id": "champion_challenger_accumulating_gates_v2",
+  "task": "image_level_multilabel_paired_model_evaluation",
+  "input_size": 768,
+  "required_split_policy": {
+    "current": "exactly_one_new_round_gate",
+    "history": "core_safety_plus_every_active_prior_round_gate",
+    "assembly": "registered_history_is_attached_by_the_backend"
+  },
+  "threshold_source": "each_model_frozen_registry",
+  "threshold_retuning": false,
+  "metrics": [
+    "macro_map",
+    "macro_f1",
+    "micro_f1",
+    "exact_match_accuracy",
+    "per_class_precision",
+    "per_class_recall",
+    "false_positive_count",
+    "false_negative_count"
+  ],
+  "paired_image_transitions": [
+    "both_correct",
+    "champion_only_correct",
+    "challenger_only_correct",
+    "both_wrong"
+  ],
+  "selection_rule": "none_evidence_only",
+  "automatic_deployment": false,
+  "evaluation_data_usage": "current_and_historical_gates_only",
+  "result_requires_human_deploy_or_hold": true,
+  "notes": "The current Gate, permanent Core Safety Gate, and every completed earlier round Gate are immutable and mutually disjoint. Gate data never enters training. Metrics are recomputed by the Agent from per-image probabilities."
+}

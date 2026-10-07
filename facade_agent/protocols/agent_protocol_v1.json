@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "human_governed_facade_model_maintenance_agent",
+  "target_user": "civil engineer without deep-learning training experience",
+  "knowledge_representation": "image-level multi-label presence",
+  "no_defect_is_mutually_exclusive": true,
+  "precise_localization_claimed": false,
+  "automatic_hyperparameter_search": false,
+  "automatic_deployment": false,
+  "recursive_same_batch_training": false,
+  "update_draw_ratio": {
+    "expert_confirmed_failure": 0.25,
+    "remaining_new": 0.25,
+    "history_replay": 0.50
+  },
+  "expert_slice_actions": ["accept", "trim", "reject"],
+  "deployment_actions": ["deploy", "hold"],
+  "llm_role": ["intent_understanding", "tool_request", "workflow_explanation", "result_summary"],
+  "deterministic_backend_role": ["validation", "inference", "clustering", "training", "metrics", "registry", "audit"]
+}
+
