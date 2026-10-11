@@ -1,4 +1,4 @@
-# Building-Facade Engineering Agent 2.0 — GPU handoff
+# Building-Facade Engineering Agent 2.2 — GPU handoff
 
 The conversation-first governance loop and all four real Worker pipelines are implemented. The advanced workbench is available from the lower-right settings drawer. No production metric or checkpoint is embedded in the source tree.
 
@@ -41,9 +41,14 @@ The setup installs the locked torchvision environment, downloads the checksum-ve
 5. Train and register one Challenger.
    - Confirm the Challenger is a second model directory under the same locked project root.
    - Confirm its manifest identifies the parent Champion, source batch, taxonomy hash, thresholds, training profile, and checkpoint hash.
-6. Evaluate on two disjoint holdouts and obtain verified paired evidence.
+6. Import separate Current Gate and initial Core Safety seed folders, using the
+   project Excel template or built-in annotation. Confirm that incomplete or
+   conflicting labels cannot freeze an evaluation job. Freeze both disjoint
+   cohorts and obtain verified paired evidence. Complete the human decision,
+   then verify that the next round accepts separate Train and a fresh Current
+   Gate, attaches the initial seed plus the completed Gate as Core Safety, and
+   never requests another safety seed.
 7. Exercise Retain and Promote in separate disposable projects.
 8. Verify the audit chain and archive logs plus artifact hashes.
 
 The project model folder must not contain datasets, Gate snapshots, training ZIPs, Worker results, logs, API keys, LLM settings, or the ConvNeXt-Tiny pretrained cache. ConvNeXt-Tiny initialization remains part of the environment configuration and may use the standard torchvision cache outside the project model folder.
-

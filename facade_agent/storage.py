@@ -5,6 +5,7 @@ import json
 import shutil
 import sqlite3
 import uuid
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,7 @@ class Store:
     def __init__(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path
+        self._evaluation_hash_cache: dict[tuple[str, int, int], frozenset[str]] = {}
         self.migrations = (
             Path(__file__).resolve().parent
             / "adapters"
@@ -390,6 +392,7 @@ class Store:
 
             for table, column in (
                 ("images", "stored_path"),
+                ("evaluation_input_images", "stored_path"),
                 ("training_jobs", "bundle_path"),
                 ("screening_jobs", "bundle_path"),
                 ("challenger_jobs", "bundle_path"),
@@ -446,6 +449,7 @@ class Store:
             )
 
             delete_steps = (
+                ("evaluation_input_images", "project_id=?"),
                 ("final_test_image_inventory", "project_id=?"),
                 ("round_completion_summaries", "project_id=?"),
                 ("evaluation_cohorts", "project_id=?"),
@@ -956,9 +960,9 @@ class Store:
                         (row["project_id"], batch_id),
                     ).fetchall()
                 ]
-                if len(pending_cohorts) not in {0, 2}:
+                if len(pending_cohorts) not in {0, 1, 2}:
                     raise ValueError(
-                        "A completed evaluation round must activate exactly its Current Gate and Core Safety cohort."
+                        "A completed evaluation round must activate its Current Gate and, only initially, the Core Safety seed."
                     )
                 if pending_cohorts:
                     current = [item for item in pending_cohorts if item["origin_role"] == "current_gate"]
@@ -966,12 +970,18 @@ class Store:
                         item for item in pending_cohorts
                         if item["origin_role"] in {"core_safety_seed", "core_safety_addition"}
                     ]
-                    if len(current) != 1 or len(safety) != 1:
+                    existing_safety = db.execute(
+                        "SELECT * FROM evaluation_cohorts WHERE project_id=? AND status='active' "
+                        "AND origin_role IN ('core_safety_seed','core_safety_addition') "
+                        "ORDER BY created_at,cohort_id LIMIT 1",
+                        (row["project_id"],),
+                    ).fetchone()
+                    if len(current) != 1 or len(safety) != (0 if existing_safety else 1):
                         raise ValueError(
                             "A completed evaluation round has invalid cohort roles."
                         )
                     current_gate_cohort = current[0]
-                    core_safety_cohort = safety[0]
+                    core_safety_cohort = dict(existing_safety) if existing_safety else safety[0]
                     db.execute(
                         "UPDATE evaluation_cohorts SET status='active',activated_at=? "
                         "WHERE project_id=? AND source_batch_id=? AND status='pending'",
@@ -1369,12 +1379,16 @@ class Store:
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             dataset = db.execute(
-                "SELECT status FROM datasets WHERE dataset_id=?", (dataset_id,)
+                "SELECT status,project_id FROM datasets WHERE dataset_id=?", (dataset_id,)
             ).fetchone()
             if dataset is None:
                 raise KeyError(f"Dataset not found: {dataset_id}")
             if dataset["status"] != "open":
                 raise PermissionError("The dataset is no longer open for uploads.")
+            if db.execute("SELECT 1 FROM evaluation_input_images WHERE project_id=? AND sha256=?", (dataset["project_id"], sha256)).fetchone() or sha256 in self._registered_evaluation_hashes(db, dataset["project_id"]):
+                raise ValueError("This image is reserved for independent evaluation and cannot enter training or maintenance data.")
+            if any(row["filename"].casefold() == filename.casefold() for row in db.execute("SELECT filename FROM images WHERE dataset_id=?", (dataset_id,))):
+                raise ValueError("Image filenames must be unique within the dataset.")
             db.execute(
                 "INSERT INTO images("
                 "image_id,dataset_id,filename,stored_path,sha256,size_bytes,"
@@ -1519,6 +1533,101 @@ class Store:
                 (now, row["dataset_id"]),
             )
         return self.get_image(image_id)
+
+    def _registered_evaluation_hashes(self, db: sqlite3.Connection, project_id: str) -> set[str]:
+        """Protect old ZIP imports too, not only images entered through folders."""
+        paths = db.execute(
+            "SELECT artifact_path FROM evaluation_cohorts WHERE project_id=? "
+            "UNION SELECT artifact_path FROM evaluation_gates WHERE project_id=?",
+            (project_id, project_id),
+        ).fetchall()
+        hashes: set[str] = set()
+        for item in paths:
+            path = Path(item["artifact_path"])
+            try:
+                metadata = path.stat()
+                key = (str(path.resolve()), metadata.st_mtime_ns, metadata.st_size)
+                cached = self._evaluation_hash_cache.get(key)
+                if cached is None:
+                    with zipfile.ZipFile(path) as archive:
+                        member = "holdout/labels.jsonl"
+                        if archive.getinfo(member).file_size > 64 * 1024 * 1024:
+                            raise ValueError("Registered evaluation label inventory is too large.")
+                        payload = archive.read(member)
+                        checksums = json.loads(archive.read("checksums.json"))
+                        if not isinstance(checksums, dict):
+                            raise ValueError("Registered evaluation checksum inventory is invalid.")
+                        if hashlib.sha256(payload).hexdigest() != checksums.get(member):
+                            raise ValueError("Registered evaluation labels failed their checksum.")
+                        rows = [json.loads(line) for line in payload.splitlines() if line.strip()]
+                        values = [row["image_sha256"] for row in rows]
+                        if any(not isinstance(value, str) or len(value) != 64 for value in values):
+                            raise ValueError("Registered evaluation image inventory is invalid.")
+                        cached = frozenset(values)
+                    self._evaluation_hash_cache[key] = cached
+                hashes.update(cached)
+            except (OSError, zipfile.BadZipFile, KeyError, TypeError, ValueError) as exc:
+                raise ValueError("Cannot verify registered evaluation history; restore its unchanged artifacts before importing Train data.") from exc
+        return hashes
+
+    @staticmethod
+    def annotation_revision(images: list[dict[str, Any]]) -> str:
+        rows = sorted((i["image_id"], i["filename"], i["annotation_status"],
+                       i["annotation_updated_at"], bool(i["no_defect"]), sorted(i["class_ids"])) for i in images)
+        return hashlib.sha256(canonical_json(rows).encode()).hexdigest()
+
+    def save_annotations(
+        self, *, dataset_id: str, entries: list[dict[str, Any]], actor_id: str,
+        expected_revision: str | None = None
+    ) -> None:
+        """Apply a reviewed table in one transaction; never leave half-imported labels."""
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            dataset = db.execute("SELECT * FROM datasets WHERE dataset_id=?", (dataset_id,)).fetchone()
+            if dataset is None:
+                raise KeyError(f"Dataset not found: {dataset_id}")
+            if dataset["status"] != "open":
+                raise PermissionError("The validated dataset is read-only.")
+            if expected_revision is not None:
+                rows = db.execute("SELECT i.image_id,i.filename,a.no_defect,a.status AS annotation_status,"
+                                  "a.updated_at AS annotation_updated_at FROM images i JOIN image_annotations a "
+                                  "ON a.image_id=i.image_id WHERE i.dataset_id=?", (dataset_id,)).fetchall()
+                images = [dict(row) | {"class_ids": [r[0] for r in db.execute(
+                    "SELECT class_id FROM image_annotation_labels WHERE image_id=?", (row["image_id"],))]} for row in rows]
+                if self.annotation_revision(images) != expected_revision:
+                    raise PermissionError("Labels or images changed. Preview the table again before confirming.")
+            valid_classes = {row["class_id"] for row in db.execute(
+                "SELECT class_id FROM classes WHERE project_id=? AND active=1", (dataset["project_id"],)
+            )}
+            image_ids = {row["image_id"] for row in db.execute(
+                "SELECT image_id FROM images WHERE dataset_id=?", (dataset_id,)
+            )}
+            seen = set()
+            for entry in entries:
+                image_id, selected, no_defect = entry["image_id"], entry["class_ids"], entry["no_defect"]
+                if image_id not in image_ids or image_id in seen:
+                    raise ValueError("Table image is missing, repeated, or belongs to another dataset.")
+                if not isinstance(no_defect, bool) or no_defect == bool(selected):
+                    raise ValueError("Choose defect classes or No defect, exclusively.")
+                if len(set(selected)) != len(selected) or set(selected) - valid_classes:
+                    raise ValueError("Table labels do not match this project's frozen taxonomy.")
+                seen.add(image_id)
+            now = utc_now()
+            for entry in entries:
+                db.execute("DELETE FROM image_annotation_labels WHERE image_id=?", (entry["image_id"],))
+                db.executemany("INSERT INTO image_annotation_labels(image_id,class_id) VALUES(?,?)",
+                               [(entry["image_id"], class_id) for class_id in entry["class_ids"]])
+                db.execute("UPDATE image_annotations SET no_defect=?,status='complete',updated_at=? WHERE image_id=?",
+                           (int(entry["no_defect"]), now, entry["image_id"]))
+            db.execute("UPDATE datasets SET updated_at=? WHERE dataset_id=?", (now, dataset_id))
+            project = db.execute("SELECT state FROM projects WHERE project_id=?", (dataset["project_id"],)).fetchone()
+            self._append_audit(
+                db, project_id=dataset["project_id"], batch_id=dataset["batch_id"],
+                actor_type="human", actor_id=actor_id, tool_name="import_annotation_table",
+                from_state=project["state"], to_state=project["state"],
+                payload={"dataset_id": dataset_id, "image_count": len(entries),
+                         "labels_sha256": hashlib.sha256(canonical_json(entries).encode()).hexdigest()},
+            )
 
     def validate_dataset(
         self,

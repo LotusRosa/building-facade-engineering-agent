@@ -21,9 +21,12 @@ class EvaluationCohortMigrationTests(unittest.TestCase):
         self.database = self.root / "data" / "facade_agent.sqlite3"
         self.database.parent.mkdir(parents=True)
         self.project_id = "project_legacy"
+        self.services: list[ModelEvaluationService] = []
         self._create_legacy_database()
 
     def tearDown(self) -> None:
+        for service in self.services:
+            service.shutdown()
         self.temporary.cleanup()
 
     @staticmethod
@@ -201,7 +204,9 @@ class EvaluationCohortMigrationTests(unittest.TestCase):
             / "protocols"
             / "champion_challenger_evaluation_profile_v1.json"
         )
-        return ModelEvaluationService(store, object(), self.root, profile, runner=object())
+        service = ModelEvaluationService(store, object(), self.root, profile, runner=object())
+        self.services.append(service)
+        return service
 
     def test_legacy_gates_migrate_without_rewriting_artifact_identity(self) -> None:
         store = Store(self.database)

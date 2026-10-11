@@ -15,8 +15,8 @@ contact:
   - family-names: "Chen"
     given-names: "Ruoyu"
     email: "chenruoyu@just.edu.cn"
-version: 2.1.0
-date-released: 2026-10-07
+version: 2.2.0
+date-released: 2026-10-11
 keywords:
   - building facade
   - engineering agent

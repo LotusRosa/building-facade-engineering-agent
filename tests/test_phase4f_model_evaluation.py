@@ -286,7 +286,7 @@ class Phase4FModelEvaluationTests(unittest.TestCase):
             )
         self._prepare_next_round("batch_round_active", "Active overlap")
         overlapping = self._make_snapshot(
-            "active-overlap.zip", content_prefix="active-overlap", first_override=duplicate
+            "active-overlap.zip", content_prefix="active-overlap", first_override=duplicate, include_addition=False
         )
         with self.assertRaisesRegex(ValueError, "overlap"):
             service.create_job(self.batch_id, overlapping.name, "human", "engineer")
@@ -307,7 +307,7 @@ class Phase4FModelEvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "protected evaluation inventory"):
             service.create_job(self.batch_id, overlapping.name, "human", "engineer")
 
-    def test_active_cohorts_plus_current_addition_form_one_core_safety_split(self) -> None:
+    def test_completed_cohorts_form_core_safety_without_a_new_safety_addition(self) -> None:
         service = self.service(EvaluationResultRunner())
         first = service.create_job(self.batch_id, self.snapshot.name, "human", "engineer")["job"]
         with self.store.connect() as db:
@@ -319,23 +319,22 @@ class Phase4FModelEvaluationTests(unittest.TestCase):
 
         self._prepare_next_round("batch_round_b", "Round B")
         round_b = self._make_snapshot(
-            "round-b-evaluation.zip", content_prefix="round-b"
+            "round-b-evaluation.zip", content_prefix="round-b", include_addition=False
         )
         second = service.create_job(self.batch_id, round_b.name, "human", "engineer")["job"]
         self.assertEqual(
             second["split_counts"],
-            {"current_gate": 2, "core_safety": 6},
+            {"current_gate": 2, "core_safety": 4},
         )
         with zipfile.ZipFile(second["bundle_path"]) as archive:
             labels = [json.loads(line) for line in archive.read("holdout/labels.jsonl").splitlines()]
         self.assertEqual({row["split"] for row in labels}, {"current_gate", "core_safety"})
-        self.assertEqual(sum(row["split"] == "core_safety" for row in labels), 6)
-        self.assertEqual(len({row["cohort_id"] for row in labels}), 4)
+        self.assertEqual(sum(row["split"] == "core_safety" for row in labels), 4)
+        self.assertEqual(len({row["cohort_id"] for row in labels}), 3)
         self.assertEqual(
             [(cohort["origin_role"], cohort["status"]) for cohort in service.list_cohorts(self.project_id)],
             [
                 ("core_safety_seed", "active"),
-                ("core_safety_addition", "pending"),
                 ("current_gate", "active"),
                 ("current_gate", "pending"),
             ],

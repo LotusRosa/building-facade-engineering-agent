@@ -31,6 +31,7 @@ EVALUATION_WORKER_MODULE = "facade_training_worker.champion_challenger_evaluatio
 CORE_GATE_KEY = "core_safety"
 SOURCE_CURRENT_SPLIT = "current_gate"
 SOURCE_CORE_SPLIT = "core_safety_addition"
+SOURCE_CORE_SEED = "core_safety"
 LOGICAL_CURRENT_SPLIT = "current_gate"
 LOGICAL_CORE_SPLIT = "core_safety"
 LEGACY_CURRENT_SPLIT = "new_scenario_holdout"
@@ -343,7 +344,7 @@ class ModelEvaluationService:
         return rows, payloads
 
     def _load_registered_cohort(
-        self, cohort: dict[str, Any]
+        self, cohort: dict[str, Any], *, include_images: bool = True
     ) -> tuple[list[dict[str, Any]], dict[str, bytes]]:
         bundle = Path(cohort["artifact_path"]).resolve()
         if self.export_root != bundle and self.export_root not in bundle.parents:
@@ -369,7 +370,7 @@ class ModelEvaluationService:
             payloads = {
                 row["image_file"]: archive.read(f"holdout/{row['image_file']}")
                 for row in rows
-            }
+            } if include_images else {}
         return rows, payloads
 
     def _validate_snapshot_legacy(self, batch_id: str, filename: str) -> dict[str, Any]:
@@ -545,6 +546,7 @@ class ModelEvaluationService:
         source = self._snapshot_path(filename)
         all_cohorts = self.list_cohorts(batch["project_id"])
         active_cohorts = [cohort for cohort in all_cohorts if cohort["status"] == "active"]
+        needs_core_seed = not any(c["origin_role"] in {"core_safety_seed", "core_safety_addition"} for c in active_cohorts)
         protected_cohorts = [
             cohort for cohort in all_cohorts if cohort["source_batch_id"] != batch_id
         ]
@@ -624,15 +626,17 @@ class ModelEvaluationService:
                     raise ValueError(f"Evaluation snapshot checksum failed: {name}")
 
             manifest = json.loads(archive.read("evaluation_manifest.json"))
+            source_core_name = SOURCE_CORE_SEED if manifest.get("schema_version") == 4 else SOURCE_CORE_SPLIT
+            expected_source_splits = [SOURCE_CURRENT_SPLIT] + ([source_core_name] if needs_core_seed else [])
             if not (
-                manifest.get("schema_version") == 3
+                manifest.get("schema_version") in {3, 4}
                 and manifest.get("purpose") == "champion_challenger_selection"
                 and manifest.get("project_id") == batch["project_id"]
                 and manifest.get("batch_id") == batch_id
-                and manifest.get("provided_splits") == [SOURCE_CURRENT_SPLIT, SOURCE_CORE_SPLIT]
+                and manifest.get("provided_splits") == expected_source_splits
                 and manifest.get("final_test") is False
             ):
-                raise ValueError("Evaluation snapshot schema-v3 identity or cohort-isolation contract is invalid.")
+                raise ValueError("Evaluation snapshot identity or cohort-isolation contract is invalid: first evaluation requires Current Gate and initial Core Safety; later evaluations supply only Current Gate.")
             label_version_id = str(manifest.get("label_version_id") or "").strip()
             taxonomy_sha256 = str(manifest.get("taxonomy_sha256") or "").strip()
             if not label_version_id or len(taxonomy_sha256) != 64:
@@ -651,13 +655,15 @@ class ModelEvaluationService:
             ids = set(cohort_ids)
             hashes = set(cohort_hashes)
             source_split_counts = {SOURCE_CURRENT_SPLIT: 0, SOURCE_CORE_SPLIT: 0}
+            required_source_keys = [SOURCE_CURRENT_SPLIT] + ([SOURCE_CORE_SPLIT] if needs_core_seed else [])
             positive_support = {
                 split: {class_id: 0 for class_id in expected_ids}
-                for split in source_split_counts
+                for split in required_source_keys
             }
             for row in rows:
                 image_id = row.get("image_id")
-                split = row.get("split")
+                raw_split = row.get("split")
+                split = SOURCE_CORE_SPLIT if raw_split == source_core_name else raw_split
                 image_file = row.get("image_file")
                 image_sha = row.get("image_sha256")
                 no_defect = row.get("no_defect")
@@ -666,7 +672,7 @@ class ModelEvaluationService:
                     raise ValueError("Evaluation snapshot overlaps the protected evaluation inventory.")
                 if not isinstance(image_id, str) or not image_id or image_id in ids:
                     raise ValueError("Evaluation image IDs overlap an active or pending evaluation cohort.")
-                if split not in source_split_counts or not isinstance(image_file, str) or not image_file.startswith("images/"):
+                if raw_split not in expected_source_splits or not isinstance(image_file, str) or not image_file.startswith("images/"):
                     raise ValueError("Evaluation label row has an invalid split or image path.")
                 if image_file not in checksums or image_sha != checksums[image_file]:
                     raise ValueError("Evaluation image SHA-256 does not match checksums.json.")
@@ -685,10 +691,11 @@ class ModelEvaluationService:
                 source_split_counts[split] += 1
                 for class_id in class_ids:
                     positive_support[split][class_id] += 1
-            if any(not count for count in source_split_counts.values()):
-                raise ValueError("Both current_gate and core_safety_addition must contain images.")
+                row["split"] = split
+            if any(not source_split_counts[key] for key in required_source_keys):
+                raise ValueError("Every required new evaluation cohort must contain images.")
             if any(not count for support in positive_support.values() for count in support.values()):
-                raise ValueError("Every class needs positive support in both new evaluation cohorts.")
+                raise ValueError("Every class needs positive support in each required new evaluation cohort.")
 
         return {
             "batch": batch,
@@ -701,6 +708,7 @@ class ModelEvaluationService:
             "classes": classes,
             "labels": rows,
             "active_cohorts": active_cohorts,
+            "needs_core_seed": needs_core_seed,
             "label_version_id": label_version_id,
             "taxonomy_sha256": taxonomy_sha256,
             "required_splits": [LOGICAL_CURRENT_SPLIT, LOGICAL_CORE_SPLIT],
@@ -827,12 +835,13 @@ class ModelEvaluationService:
             snapshot["new_cohorts"][SOURCE_CURRENT_SPLIT],
             LOGICAL_CURRENT_SPLIT,
         )
-        append_rows(
-            [row for row in snapshot["labels"] if row["split"] == SOURCE_CORE_SPLIT],
-            source_payloads,
-            snapshot["new_cohorts"][SOURCE_CORE_SPLIT],
-            LOGICAL_CORE_SPLIT,
-        )
+        if SOURCE_CORE_SPLIT in snapshot["new_cohorts"]:
+            append_rows(
+                [row for row in snapshot["labels"] if row["split"] == SOURCE_CORE_SPLIT],
+                source_payloads,
+                snapshot["new_cohorts"][SOURCE_CORE_SPLIT],
+                LOGICAL_CORE_SPLIT,
+            )
         for cohort in snapshot["active_cohorts"]:
             rows, image_payloads = self._load_registered_cohort(cohort)
             append_rows(rows, image_payloads, cohort, LOGICAL_CORE_SPLIT)
@@ -895,22 +904,19 @@ class ModelEvaluationService:
             self.verify_job(job["job_id"])
             return {"job": job, "idempotent": True}
         job_id = f"evaluation_{fingerprint[:16]}"
-        has_core_lineage = any(
-            cohort["origin_role"] in {"core_safety_seed", "core_safety_addition"}
-            for cohort in snapshot["active_cohorts"]
-        )
         snapshot["new_cohorts"] = {
             SOURCE_CURRENT_SPLIT: {
                 "cohort_id": f"cohort_{fingerprint[:12]}_gate",
                 "source_round_name": snapshot["batch"]["name"],
                 "origin_role": "current_gate",
             },
-            SOURCE_CORE_SPLIT: {
+        }
+        if snapshot["needs_core_seed"]:
+            snapshot["new_cohorts"][SOURCE_CORE_SPLIT] = {
                 "cohort_id": f"cohort_{fingerprint[:12]}_safety",
                 "source_round_name": snapshot["batch"]["name"],
-                "origin_role": "core_safety_addition" if has_core_lineage else "core_safety_seed",
-            },
-        }
+                "origin_role": "core_safety_seed",
+            }
         final_dir = self.export_root / job_id
         final_dir.mkdir(parents=True, exist_ok=False)
         bundle = final_dir / f"{job_id}.zip"
@@ -1016,7 +1022,7 @@ class ModelEvaluationService:
                     from_state=BatchState.CHALLENGER_TRAINED, to_state=BatchState.CHALLENGER_TRAINED,
                     payload={"job_id": job_id, "snapshot_sha256": snapshot["source_sha256"],
                              "current_gate_cohort_id": snapshot["new_cohorts"][SOURCE_CURRENT_SPLIT]["cohort_id"],
-                             "core_safety_cohort_id": snapshot["new_cohorts"][SOURCE_CORE_SPLIT]["cohort_id"],
+                             "core_safety_cohort_id": snapshot["new_cohorts"].get(SOURCE_CORE_SPLIT, {}).get("cohort_id"),
                              "split_counts": snapshot["split_counts"],
                              "cohort_data_used_for_training": False, "test_read": False},
                 )

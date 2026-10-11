@@ -5,6 +5,24 @@ from pathlib import Path
 
 
 class UIRegressionTests(unittest.TestCase):
+    def test_language_controls_file_captions_and_chat_requests(self):
+        root = Path(__file__).resolve().parents[1] / 'facade_agent' / 'static'
+        html = (root / 'index.html').read_text(encoding='utf-8-sig')
+        controls = (root / 'file_controls.js').read_text(encoding='utf-8-sig')
+        app = (root / 'app.js').read_text(encoding='utf-8-sig')
+        locale = (root / 'localization.js').read_text(encoding='utf-8-sig')
+        self.assertIn('/file_controls.js', html)
+        self.assertIn('/localization.js', html)
+        self.assertLess(html.index('/evaluation_input.js'), html.index('/localization.js'))
+        self.assertIn('file_none:"No files selected"', controls)
+        self.assertIn('file_none:"未选择文件"', controls)
+        self.assertIn('MutationObserver', controls)
+        self.assertIn('input.disabled', controls)
+        self.assertIn('language:app.lang', app)
+        self.assertIn('data-i18n="prepare_runtime"', html)
+        self.assertIn('api_key_example', locale)
+        self.assertNotIn('refresh().catch', (root / 'evaluation_input.js').read_text(encoding='utf-8-sig'))
+
     def test_conversation_is_primary_and_workbench_is_an_advanced_drawer(self) -> None:
         root = Path(__file__).resolve().parents[1] / "facade_agent" / "static"
         html = (root / "index.html").read_text(encoding="utf-8-sig")
@@ -151,7 +169,7 @@ class UIRegressionTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "facade_agent" / "static"
         html = (root / "index.html").read_text(encoding="utf-8-sig")
         script = (root / "app.js").read_text(encoding="utf-8-sig")
-        self.assertIn("AGENT 2.1 · COMPLETE", html)
+        self.assertIn("AGENT 2.2 · COMPLETE", html)
         self.assertIn("/api/maintenance/batches", script)
         self.assertIn('tool:"create_maintenance_batch"', script)
         self.assertIn('tool:"create_maintenance_dataset"', script)
@@ -185,7 +203,7 @@ class UIRegressionTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "facade_agent" / "static"
         html = (root / "index.html").read_text(encoding="utf-8-sig")
         script = (root / "app.js").read_text(encoding="utf-8-sig")
-        self.assertIn("AGENT 2.1 · COMPLETE", html)
+        self.assertIn("AGENT 2.2 · COMPLETE", html)
         self.assertIn("/api/screening/runs", script)
         self.assertIn("/api/failure-slices", script)
         self.assertIn('tool:"start_champion_failure_discovery"', script)
@@ -197,7 +215,7 @@ class UIRegressionTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "facade_agent" / "static"
         html = (root / "index.html").read_text(encoding="utf-8-sig")
         script = (root / "app.js").read_text(encoding="utf-8-sig")
-        self.assertIn("AGENT 2.1 · COMPLETE", html)
+        self.assertIn("AGENT 2.2 · COMPLETE", html)
         self.assertIn("/api/failure-review", script)
         self.assertIn('tool:"save_failure_slice_review"', script)
         self.assertIn('tool:"freeze_failure_slice_review"', script)
@@ -212,7 +230,7 @@ class UIRegressionTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "facade_agent" / "static"
         html = (root / "index.html").read_text(encoding="utf-8-sig")
         script = (root / "app.js").read_text(encoding="utf-8-sig")
-        self.assertIn("AGENT 2.1 · COMPLETE", html)
+        self.assertIn("AGENT 2.2 · COMPLETE", html)
         self.assertIn("/api/challenger/jobs", script)
         self.assertIn('tool:"create_challenger_training_job"', script)
         self.assertIn("160 / 160 / 320", script)

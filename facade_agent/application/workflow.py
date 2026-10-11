@@ -55,9 +55,24 @@ class WorkflowSnapshotService:
             batch = self._row(db, "SELECT * FROM maintenance_batches WHERE batch_id=?", (batch_id,)) if batch_id else None
             dataset = self._row(
                 db,
-                "SELECT * FROM datasets WHERE project_id=? ORDER BY created_at DESC LIMIT 1",
-                (project_id,),
+                "SELECT * FROM datasets WHERE project_id=? AND "
+                + ("batch_id=?" if batch else "role='initial_training'")
+                + " ORDER BY created_at DESC LIMIT 1",
+                (project_id, batch_id) if batch else (project_id,),
             )
+            counts = db.execute(
+                "SELECT count(*) AS total,sum(a.status='complete') AS labeled FROM images i "
+                "JOIN image_annotations a ON a.image_id=i.image_id WHERE i.dataset_id=?",
+                (dataset["dataset_id"] if dataset else "",),
+            ).fetchone()
+            annotation_progress = {
+                "dataset_id": dataset["dataset_id"] if dataset else None,
+                "dataset_status": dataset["status"] if dataset else None,
+                "image_count": int(counts["total"] or 0),
+                "labeled_count": int(counts["labeled"] or 0),
+                "unlabeled_count": int(counts["total"] or 0) - int(counts["labeled"] or 0),
+            }
+            annotation_progress["complete"] = bool(annotation_progress["image_count"] and not annotation_progress["unlabeled_count"])
             training_job = self._row(db, "SELECT * FROM training_jobs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             training_run = self._row(db, "SELECT * FROM training_runs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             screening_job = self._row(db, "SELECT * FROM screening_jobs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
@@ -65,10 +80,40 @@ class WorkflowSnapshotService:
             challenger_job = self._row(db, "SELECT * FROM challenger_jobs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             challenger_run = self._row(db, "SELECT * FROM challenger_runs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             evaluation_job = self._row(db, "SELECT * FROM evaluation_jobs WHERE project_id=? AND is_current=1 ORDER BY created_at DESC LIMIT 1", (project_id,))
+            if batch:
+                cohort_counts = {}
+                history = db.execute(
+                    "SELECT origin_role,image_count FROM evaluation_cohorts WHERE project_id=? AND status='active'",
+                    (project_id,),
+                ).fetchall()
+                seed_required = not any(c["origin_role"] in {"core_safety_seed", "core_safety_addition"} for c in history)
+                for cohort in ("current_gate", "core_safety") if seed_required else ("current_gate",):
+                    row = db.execute(
+                        "SELECT count(*) AS total,sum(annotation_status='complete') AS labeled "
+                        "FROM evaluation_input_images WHERE batch_id=? AND cohort=?",
+                        (batch_id, cohort),
+                    ).fetchone()
+                    cohort_counts[cohort] = {"image_count": int(row["total"] or 0), "labeled_count": int(row["labeled"] or 0)}
+                annotation_progress["evaluation_cohorts"] = cohort_counts
+                annotation_progress["core_safety_history_count"] = sum(int(c["image_count"]) for c in history)
+                annotation_progress["core_safety_seed_required"] = seed_required
+                if batch["state"] == "CHALLENGER_TRAINED":
+                    total = sum(c["image_count"] for c in cohort_counts.values())
+                    labeled = sum(c["labeled_count"] for c in cohort_counts.values())
+                    annotation_progress = {
+                        "kind": "evaluation", "cohorts": cohort_counts,
+                        "core_safety_history_count": sum(int(c["image_count"]) for c in history),
+                        "core_safety_seed_required": seed_required,
+                        "image_count": total, "labeled_count": labeled, "unlabeled_count": total - labeled,
+                        "dataset_status": "frozen" if evaluation_job and evaluation_job["batch_id"] == batch_id else "open",
+                        "complete": all(c["image_count"] and c["labeled_count"] == c["image_count"] for c in cohort_counts.values()),
+                    }
             evaluation_run = self._row(db, "SELECT * FROM evaluation_runs WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             evidence = self._row(db, "SELECT evidence_id FROM evidence_reports WHERE project_id=? ORDER BY created_at DESC LIMIT 1", (project_id,))
             completion = self._row(db, "SELECT * FROM round_completion_summaries WHERE project_id=? ORDER BY completed_at DESC LIMIT 1", (project_id,))
-            audit = self._row(db, "SELECT event_sha256 FROM audit_events WHERE project_id=? ORDER BY event_id DESC LIMIT 1", (project_id,))
+            # Approval bookkeeping must not invalidate its own workflow proposal.
+            # Actual data/state mutations still change this revision and reject stale confirmations.
+            audit = self._row(db, "SELECT event_sha256 FROM audit_events WHERE project_id=? AND tool_name NOT IN ('request_human_confirmation','resolve_human_confirmation') ORDER BY event_id DESC LIMIT 1", (project_id,))
 
         state = batch["state"] if batch else project["state"]
         action: dict[str, Any] | None = None
@@ -79,7 +124,12 @@ class WorkflowSnapshotService:
         elif batch and batch["state"] == "CREATED":
             action = self._action("import_maintenance_data", None, {"batch_id": batch_id}, "task_panel_required", "maintenance-import", title="Import and label maintenance data")
         elif batch and batch["state"] in {"MAINTENANCE_DATA_IMPORTED", "MAINTENANCE_LABELS_READY"}:
-            action = self._action("review_maintenance_labels", None, {"batch_id": batch_id}, "task_panel_required", "maintenance-labels", title="Review maintenance labels")
+            if dataset and dataset['status'] == 'validated':
+                action = self._action('freeze_maintenance_labels', 'freeze_maintenance_batch', {'batch_id': batch_id}, 'conversation_confirmable', 'maintenance-labels', requires_confirmation=True, title='Confirm and freeze maintenance labels')
+            elif annotation_progress['complete']:
+                action = self._action('validate_maintenance_labels', 'validate_dataset', {'dataset_id': dataset['dataset_id']}, 'conversation_confirmable', 'maintenance-labels', requires_confirmation=True, title='Validate complete maintenance annotations')
+            else:
+                action = self._action("review_maintenance_labels", None, {"batch_id": batch_id}, "task_panel_required", "maintenance-labels", title="Review maintenance labels")
         elif batch and batch["state"] == "MAINTENANCE_BATCH_FROZEN":
             action = self._action("start_failure_discovery", "start_champion_failure_discovery", {"batch_id": batch_id}, "conversation_confirmable", "screening-progress", requires_confirmation=True, title="Start Champion screening and failure discovery")
         elif batch and batch["state"] == "FAILURE_DISCOVERY_COMPLETED":
@@ -95,14 +145,19 @@ class WorkflowSnapshotService:
             if evaluation_job and evaluation_job["batch_id"] == batch_id:
                 action = self._action("start_paired_evaluation", "start_model_evaluation", {"job_id": evaluation_job["job_id"]}, "conversation_confirmable", "evaluation-progress", requires_confirmation=True, title="Start Champion–Challenger evaluation")
             else:
-                action = self._action("import_evaluation_snapshot", None, {"batch_id": batch_id}, "task_panel_required", "evaluation-import", title="Import Current Gate and Core Safety addition")
+                action = self._action("import_evaluation_snapshot", None, {"batch_id": batch_id}, "task_panel_required", "evaluation-import", title="Prepare independent evaluation folders")
         elif batch and batch["state"] == "DECISION_PENDING":
             action = self._action("record_engineer_decision", "record_deployment_decision", {"batch_id": batch_id}, "task_panel_required", "engineer-decision", requires_confirmation=True, title="Choose Retain or Promote")
         elif project["state"] == "PROJECT_CREATED":
             action = self._action("confirm_taxonomy", "confirm_taxonomy", {"project_id": project_id}, "conversation_confirmable", "project-setup", requires_confirmation=True, title="Confirm frozen classes")
         elif project["state"] == "TAXONOMY_CONFIRMED":
             action = self._action("import_initial_data", None, {"project_id": project_id}, "task_panel_required", "initial-import", title="Import and label initial data")
-        elif project["state"] in {"DATA_IMPORTED", "DATA_VALIDATED", "ANNOTATION_READY"}:
+        elif project["state"] == "DATA_IMPORTED":
+            if annotation_progress["complete"]:
+                action = self._action("validate_initial_labels", "validate_dataset", {"dataset_id": dataset["dataset_id"]}, "conversation_confirmable", "initial-labels", requires_confirmation=True, title="Validate complete annotations and freeze the dataset")
+            else:
+                action = self._action("review_initial_labels", None, {"dataset_id": dataset["dataset_id"] if dataset else ""}, "task_panel_required", "initial-labels", title="Import a label table or complete image annotations and validate")
+        elif project["state"] in {"DATA_VALIDATED", "ANNOTATION_READY"}:
             if training_job:
                 action = self._action("start_initial_training", "start_initial_champion_training", {"job_id": training_job["job_id"]}, "conversation_confirmable", "initial-training", requires_confirmation=True, title="Start single-GPU Initial Champion training")
             else:
@@ -128,6 +183,8 @@ class WorkflowSnapshotService:
             "evidence": evidence["evidence_id"] if evidence else None,
             "completion": completion["batch_id"] if completion else None,
             "audit": audit["event_sha256"] if audit else None,
+            "annotation_progress": annotation_progress,
+            "dataset_updated_at": dataset["updated_at"] if dataset else None,
             "gpu_queue": [
                 {
                     "queue_id": item.get("queue_id"),
@@ -148,6 +205,7 @@ class WorkflowSnapshotService:
             "active_batch": batch,
             "round_completion": completion,
             "gpu_queue": gpu_queue,
+            "annotation_progress": annotation_progress,
         }
 
     def request_task_panel_action(self, project_id: str, action_id: str) -> dict[str, Any]:
@@ -188,6 +246,13 @@ class WorkflowSnapshotService:
 
 
 def register_workflow_tools(registry: ToolRegistry, service: WorkflowSnapshotService) -> None:
+    registry.register(ToolDefinition(
+        "get_annotation_status",
+        "Read current image, annotated, and unannotated counts for the active dataset; never infer labels.",
+        {"type": "object", "required": ["project_id"], "properties": {"project_id": {"type": "string", "minLength": 1}}, "additionalProperties": False},
+        ToolPolicy(mutates_state=False, requires_confirmation=False),
+        lambda args, ctx: service.get(args["project_id"])["annotation_progress"],
+    ))
     registry.register(ToolDefinition(
         "get_workflow_status",
         "Read the authoritative next governed workflow action for a project.",

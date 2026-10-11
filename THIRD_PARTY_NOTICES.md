@@ -1,8 +1,9 @@
 # Third-Party Notices
 
 This document records direct third-party software, pretrained assets, and
-optional external services used by Building-Facade Engineering Agent 2.1.0.
-It was reviewed on 2026-10-05.
+optional external services used by Building-Facade Engineering Agent 2.2.0.
+The input and annotation update was reviewed on 2026-10-11; the pinned GPU
+dependency inventory is unchanged from the 2026-10-05 review.
 
 The standard source release does not bundle the packages, CUDA runtime, or
 pretrained weights listed below. The optional environment-preparation scripts
@@ -33,6 +34,13 @@ Source-checkout verification uses
 [pytest 7.4.4](https://github.com/pytest-dev/pytest/tree/7.4.4), distributed
 under the [MIT License](https://github.com/pytest-dev/pytest/blob/7.4.4/LICENSE).
 pytest is not required to run the installed Agent interface.
+
+The Excel/CSV annotation reader and template exporter use Python's standard
+library (`csv`, `zipfile`, and `xml.etree.ElementTree`); they do not bundle an
+Excel engine or add a runtime package dependency. An optional development-only
+interoperability test uses an installed copy of
+[openpyxl](https://openpyxl.readthedocs.io/) (MIT License); it is skipped when
+openpyxl is absent. openpyxl is not bundled or needed by the Agent.
 
 ## Pretrained initialization
 

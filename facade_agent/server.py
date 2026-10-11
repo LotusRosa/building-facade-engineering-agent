@@ -11,9 +11,11 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from .application.agent_runtime import AgentRuntime
+from .application.annotation_tables import AnnotationTableService, MAX_BYTES
 from .application.challenger_jobs import ChallengerJobService, register_challenger_job_tool
 from .application.challenger_training import ChallengerTrainingService, register_challenger_training_tools
 from .application.environment import EnvironmentManager
+from .application.evaluation_input import EvaluationInputService
 from .application.failure_discovery import FailureDiscoveryService, register_failure_discovery_tools
 from .application.failure_review import FailureReviewService, register_failure_review_tools
 from .application.image_io import probe_image, safe_filename
@@ -93,9 +95,11 @@ register_workflow_tools(TOOLS, WORKFLOW)
 LLM = LLMManager()
 AGENT = AgentRuntime(STORE, TOOLS, LLM, WORKFLOW)
 SAMPLE_DATASETS = SampleDatasetImportService(STORE, ROOT)
+ANNOTATION_TABLES = AnnotationTableService(STORE)
+EVALUATION_INPUT = EvaluationInputService(STORE, ROOT, MODEL_EVALUATION)
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "FacadeAgent/2.1"
+    server_version = "FacadeAgent/2.2"
 
     def log_message(self, format: str, *args) -> None:
         return
@@ -136,6 +140,35 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
+        if path.startswith("/api/evaluation/input/"):
+            try:
+                if path == "/api/evaluation/input/status":
+                    self.send_json({"ok": True, "result": EVALUATION_INPUT.snapshot(query.get("batch_id", [""])[0])})
+                elif path == "/api/evaluation/input/image":
+                    content, mime = EVALUATION_INPUT.image_content(query.get("image_id", [""])[0])
+                    self.send_bytes(content, mime)
+                elif path == "/api/evaluation/input/table":
+                    format = query.get("format", ["xlsx"])[0]
+                    content = EVALUATION_INPUT.export(query.get("batch_id", [""])[0], query.get("cohort", [""])[0], format, template=query.get("template", ["false"])[0] == "true")
+                    mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if format == "xlsx" else "text/csv; charset=utf-8"
+                    self.send_bytes(content, mime, f"labels.{format}")
+                else:
+                    self.send_error(HTTPStatus.NOT_FOUND)
+            except (ValueError, PermissionError, KeyError, OSError) as exc:
+                self.send_json({"ok": False, "error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+        if path == "/api/annotations/table":
+            try:
+                format = query.get("format", ["xlsx"])[0]
+                content = ANNOTATION_TABLES.export(
+                    query.get("project_id", [""])[0], query.get("dataset_id", [None])[0],
+                    format, template=query.get("template", ["false"])[0] == "true",
+                )
+                mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if format == "xlsx" else "text/csv; charset=utf-8"
+                self.send_bytes(content, mime, f"labels.{format}")
+            except (ValueError, KeyError, PermissionError) as exc:
+                self.send_json({"ok": False, "error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
         if path == "/api/state":
             projects = STORE.list_projects()
             active = STORE.get_project(projects[0]["project_id"]) if projects else None
@@ -380,6 +413,27 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         try:
             parsed = urlparse(self.path)
+            if parsed.path in {"/api/evaluation/input/upload", "/api/evaluation/input/table/import"}:
+                query = parse_qs(parsed.query)
+                batch_id, cohort = query.get("batch_id", [""])[0], query.get("cohort", [""])[0]
+                if parsed.path.endswith("/upload"):
+                    if query.get("confirmed", ["false"])[0] != "true":
+                        raise PermissionError("Confirm folder import before receiving evaluation images.")
+                    result = EVALUATION_INPUT.upload(batch_id, cohort, query.get("filename", [""])[0], self.read_bytes())
+                else:
+                    result = EVALUATION_INPUT.import_table(batch_id, cohort, self.read_bytes(limit=MAX_BYTES), query.get("filename", [""])[0], confirmed=query.get("confirmed", ["false"])[0] == "true", preview_token=query.get("preview_token", [""])[0])
+                self.send_json({"ok": True, "result": result})
+                return
+            if parsed.path == "/api/annotations/table/import":
+                query = parse_qs(parsed.query)
+                result = ANNOTATION_TABLES.import_table(
+                    query.get("dataset_id", [""])[0], self.read_bytes(limit=MAX_BYTES),
+                    query.get("filename", [""])[0],
+                    confirmed=query.get("confirmed", ["false"])[0] == "true",
+                    preview_token=query.get("preview_token", [""])[0],
+                )
+                self.send_json({"ok": True, "result": result})
+                return
             if parsed.path == "/api/labeled-bundles/import":
                 query = parse_qs(parsed.query)
                 if query.get("confirmed", [""])[0].casefold() != "true":
@@ -421,17 +475,32 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/datasets/upload":
                 query = parse_qs(parsed.query)
                 dataset_id = query.get("dataset_id", [""])[0]
-                filename = safe_filename(unquote(query.get("filename", [""])[0]))
+                filename = safe_filename(query.get("filename", [""])[0])
                 dataset = STORE.get_dataset(dataset_id)
+                if dataset["status"] != "open":
+                    raise PermissionError("The dataset is read-only.")
                 content = self.read_bytes()
                 probe = probe_image(content, filename)
+                if probe.health_status != "ok":
+                    raise ValueError("The selected image is unreadable or unsupported; use a valid JPEG/PNG.")
                 digest = hashlib.sha256(content).hexdigest()
+                existing = next((i for i in STORE.list_images(dataset_id) if i["filename"].casefold() == filename.casefold()), None)
+                if existing:
+                    if existing["sha256"] != digest:
+                        raise ValueError("A different image already uses this filename. Rename the new image.")
+                    if hashlib.sha256(Path(existing["stored_path"]).read_bytes()).hexdigest() != digest:
+                        raise ValueError("The previously imported image changed on disk.")
+                    self.send_json({"ok": True, "image": existing, "idempotent": True})
+                    return
+                if any(i["sha256"] == digest for i in STORE.list_images(dataset_id)):
+                    raise ValueError("This image content is already imported under another filename.")
                 folder = PROJECT_FILES / dataset["project_id"] / "datasets" / dataset_id / "images"
                 folder.mkdir(parents=True, exist_ok=True)
                 stored = folder / f"{digest[:12]}__{filename}"
                 if stored.exists():
                     raise ValueError("该图片已经存在于本数据集中。")
-                stored.write_bytes(content)
+                with stored.open("xb") as handle:
+                    handle.write(content)
                 try:
                     image = STORE.register_image(
                         dataset_id=dataset_id,
@@ -451,6 +520,14 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             body = self.read_json()
+            if parsed.path == "/api/evaluation/input/save":
+                result = EVALUATION_INPUT.save_label(str(body.get("image_id", "")), body.get("class_ids", []), body.get("no_defect"))
+                self.send_json({"ok": True, "result": result})
+                return
+            if parsed.path == "/api/evaluation/input/freeze":
+                result = EVALUATION_INPUT.freeze(str(body.get("batch_id", "")), confirmed=body.get("confirmed") is True, preview_token=str(body.get("preview_token", "")))
+                self.send_json({"ok": True, "result": result})
+                return
             if parsed.path == "/api/gpu-queue/cancel":
                 if not bool(body.get("confirmed")):
                     raise PermissionError("Explicit engineer confirmation is required before queue cancellation.")
@@ -472,7 +549,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "environment": ENVIRONMENT.configure(body)})
                 return
             if parsed.path == "/api/environment/bootstrap":
-                self.send_json({"ok": True, "environment": ENVIRONMENT.bootstrap(confirmed=bool(body.get("confirmed")))})
+                self.send_json({"ok": True, "environment": ENVIRONMENT.bootstrap(confirmed=body.get("confirmed") is True)})
                 return
             if parsed.path == "/api/agent/messages/delete":
                 raw_project_id = body.get("project_id")
@@ -489,16 +566,20 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/agent/chat":
                 result = AGENT.chat(
                     text=str(body.get("text", "")),
+                    language=body.get("language"),
                     project_id=str(body["project_id"]) if body.get("project_id") else None,
                     selected_image_id=str(body["selected_image_id"]) if body.get("selected_image_id") else None,
                 )
                 self.send_json({"ok": True, "result": result})
                 return
             if parsed.path == "/api/agent/confirm":
+                if not isinstance(body.get('approved'), bool):
+                    raise ValueError('Approval must be a JSON boolean.')
                 result = AGENT.resolve_confirmation(
                     pending_id=str(body.get("pending_id", "")),
-                    approved=bool(body.get("approved")),
+                    approved=body['approved'],
                     actor_id=str(body.get("actor_id", "local_engineer")),
+                    language=body.get("language"),
                 )
                 self.send_json({"ok": True, "result": result})
                 return
@@ -508,7 +589,7 @@ class Handler(BaseHTTPRequestHandler):
                     dict(body.get("arguments", {})),
                     actor_type=str(body.get("actor_type", "human")),
                     actor_id=str(body.get("actor_id", "local_engineer")),
-                    confirmed=bool(body.get("confirmed")),
+                    confirmed=body.get("confirmed") is True,
                 )
                 project_id = body.get("project_id")
                 if not project_id and isinstance(result, dict):
@@ -521,10 +602,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "result": result})
                 return
             if parsed.path == "/api/annotations/save":
+                if not isinstance(body.get("class_ids"), list) or not isinstance(body.get("no_defect"), bool):
+                    raise ValueError("Labels require a class_ids array and boolean no_defect.")
                 result = STORE.save_annotation(
                     image_id=str(body.get("image_id", "")),
-                    class_ids=list(body.get("class_ids", [])),
-                    no_defect=bool(body.get("no_defect")),
+                    class_ids=body["class_ids"],
+                    no_defect=body["no_defect"],
                 )
                 self.send_json({"ok": True, "image": result})
                 return

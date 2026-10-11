@@ -82,6 +82,7 @@ class Phase3ALLMAgentTests(unittest.TestCase):
             runtime.resolve_confirmation(pending_id=response["pending"]["pending_id"], approved=True)
 
     def test_llm_project_creation_opens_human_task_panel_without_creating(self):
+        # Names and paths still require human review in both UI languages.
         client = FakeClient([
             ModelTurn(tool_calls=[ModelToolCall("call-1", "create_project", {"project_name": "Bridge", "classes": ["crack", "rust"]})]),
         ])
@@ -323,6 +324,42 @@ class Phase3ALLMAgentTests(unittest.TestCase):
         serialized = json.dumps(response["workflow"])
         self.assertNotIn("private-lease", serialized)
         self.assertNotIn("sha256", serialized)
+
+
+    def test_interface_language_controls_offline_and_confirmed_workflow_replies(self):
+        project = self.store.create_project(project_name="Facade", class_names=["crack"])["project"]
+        runtime = AgentRuntime(self.store, self.registry, FakeManager(None), WorkflowSnapshotService(self.store))
+        self.assertIn('Connect model', runtime.chat(text='你好', project_id=None, language='en')['message'])
+        self.assertIn('接入模型', runtime.chat(text='hello', project_id=None, language='zh')['message'])
+        response = runtime.chat(text='继续', project_id=project['project_id'], language='en')
+        self.assertIn('Confirm frozen classes', response['message'])
+        self.assertNotRegex(response['message'], r'[\u4e00-\u9fff]')
+        resolved = runtime.resolve_confirmation(pending_id=response['pending']['pending_id'], approved=True, language='en')
+        self.assertIn('Engineer confirmed', resolved['message'])
+        response = runtime.chat(text='next', project_id=project['project_id'], language='zh')
+        self.assertIn('导入并标注初始训练数据', response['message'])
+        self.assertNotIn('Import and label', response['message'])
+        with self.assertRaises(ValueError):
+            runtime.chat(text='next', project_id=project['project_id'], language='invalid')
+
+    def test_explicit_ui_language_is_included_in_llm_system_instruction(self):
+        client = FakeClient([ModelTurn(text='Ready.')])
+        runtime = AgentRuntime(self.store, self.registry, FakeManager(client))
+        runtime.chat(text='你好', project_id=None, language='en')
+        self.assertIn('All assistant replies must use English', client.last_messages[0]['content'])
+
+    def test_pending_confirmation_keeps_revision_but_real_state_changes_invalidate_it(self):
+        project = self.store.create_project(project_name='Facade', class_names=['crack'])['project']
+        workflow = WorkflowSnapshotService(self.store)
+        runtime = AgentRuntime(self.store, self.registry, FakeManager(None), workflow)
+        version = workflow.get(project['project_id'])['workflow_version']
+        response = runtime.chat(text='continue', project_id=project['project_id'], language='en')
+        self.assertEqual(workflow.get(project['project_id'])['workflow_version'], version)
+        self.store.transition_project(project_id=project['project_id'], action='confirm_taxonomy', confirmed=True)
+        with self.assertRaisesRegex(PermissionError, 'workflow changed'):
+            runtime.resolve_confirmation(pending_id=response['pending']['pending_id'], approved=True)
+        self.assertEqual(self.store.get_pending_tool_call(response['pending']['pending_id'])['status'], 'failed')
+        self.assertTrue(self.store.verify_audit_chain()['valid'])
 
 
 if __name__ == "__main__":

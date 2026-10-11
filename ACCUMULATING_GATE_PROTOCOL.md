@@ -1,54 +1,72 @@
 # Accumulating Gate protocol
 
-Every completed maintenance round contributes to two strictly separated histories:
-
-- Its frozen Discovery dataset becomes eligible for later `history_replay`, whether the decision was Retain or Promote.
-- Its current Gate becomes immutable evaluation-only history after the final Retain or Promote decision and is added to the cumulative Core Safety history.
-
-Gate images and labels never enter training. The maintenance product has no terminal benchmark workflow.
+Train and evaluation data are separate in every round. Reserve an independent
+initial Core Safety seed `S0` before initial training. Only initial Train images
+enter Initial Champion training; import the reserved seed for the first paired
+evaluation.
 
 ## Round contract
 
-At round `r`, the backend assembles:
+- Every maintenance round supplies its own Train/maintenance dataset `Dr`.
+  Failure Discovery and expert review determine the update training data.
+- Every evaluated round supplies a fresh, independent Current Gate `Gr`.
+- The first evaluation also imports the reserved initial Core Safety `S0`.
+- Later evaluations automatically attach cumulative Core Safety `S(r-1)`;
+  they do not ask for another safety folder.
+- Champion and Challenger are evaluated on both `Gr` and `S(r-1)` using
+  their registered thresholds, without retuning or automatic selection.
+- After successful evaluation and the human Retain or Promote decision,
+  `Sr = S(r-1) union Gr`. The completed Gate is historical evaluation-only data.
+  Either decision has the same Gate accumulation behavior.
+- Failed, unfinished, or early-terminated rounds do not activate evaluation data.
 
-- training history: initial/Core training data plus all earlier Discovery datasets;
-- evaluation history: cumulative Core Safety, which contains the original safety cohort plus every earlier completed round Gate;
-- current evaluation: exactly one newly supplied current Gate.
+Eligible Discovery datasets from completed rounds may enter later history replay.
+Core Safety and Gates never enter training or replay. History is immutable,
+with original cohort identities retained for provenance rather than duplicated
+as extra evaluation splits.
 
-The engineer supplies only the current Gate after the first round. The backend attaches registered history, rejects missing or changed artifacts, and verifies image SHA-256 values against all project datasets and all registered Gates.
+## Human input
 
-## Snapshot manifest v2
+Use separate folders for each role. Every folder supports the same project
+Excel/CSV template: `filename`, one 0/1 column per frozen class, and `no_defect`.
+Missing labels can be completed inside the Agent. Required new evaluation
+cohorts must be nonempty, fully annotated, and have positive support per class.
+Suggested Train:holdout ratios are 7:3 or 8:2: initially the holdout is Core
+Safety, and in each maintenance round it is Current Gate. These are optional,
+not enforced or automatically applied. Keep related acquisitions together when
+partitioning; exact-content checks cannot detect every near-duplicate image.
 
-The first evaluation supplies `current_gate` and `core_safety`:
+Evaluation folders may be imported and annotated early, but job freezing requires
+a registered Challenger and explicit confirmation bound to the input revision.
+Freezing does not launch a GPU job. The backend verifies checksums, taxonomy,
+labels, class support, and zero overlap against Train and evaluation history.
+
+## Internal snapshot manifest v4
+
+The folder workflow generates this internal package; users do not construct ZIPs.
+For the first evaluation its manifest includes:
 
 ```json
 {
-  "schema_version": 2,
-  "purpose": "deployment_decision_evidence",
+  "schema_version": 4,
+  "purpose": "champion_challenger_selection",
   "project_id": "project_...",
   "batch_id": "batch_...",
-  "current_gate_name": "round_a_gate",
-  "provided_splits": ["current_gate", "core_safety"]
+  "provided_splits": ["current_gate", "core_safety"],
+  "label_version_id": "folder-labels-...",
+  "taxonomy_sha256": "..."
 }
 ```
 
-Every later evaluation supplies only `current_gate`:
-
-```json
-{
-  "schema_version": 2,
-  "purpose": "deployment_decision_evidence",
-  "project_id": "project_...",
-  "batch_id": "batch_...",
-  "current_gate_name": "round_b_gate",
-  "provided_splits": ["current_gate"]
-}
-```
-
-`current_gate_name` must be a new lowercase identifier beginning with a letter and containing only letters, digits, and underscores. Each supplied Gate must have positive support for every frozen class.
-
-The ZIP also contains `classes.json`, `labels.jsonl`, every referenced `images/...` member, and `checksums.json`. Each label row records `image_id`, `split`, `image_file`, `image_sha256`, `no_defect`, and `class_ids`.
+Later rounds use `"provided_splits": ["current_gate"]`. The assembled Worker
+job always includes both logical evaluation splits, `current_gate` and
+`core_safety`. It contains classes, label rows, referenced images, and checksums.
+Legacy v3 seed packages remain compatible for the first evaluation; existing
+historical cohort records remain immutable and readable.
 
 ## Terminal activation
 
-The current Gate remains `pending` while evidence is reviewed. The single final Retain or Promote decision activates both the current Gate and its Core Safety addition in the round summary. Early termination before Challenger creation has no evaluation Gate and therefore activates none.
+New cohorts remain pending until the engineer records Retain or Promote.
+The first completed round activates its safety seed and Gate. Later completed
+rounds activate only their Gate and record the cumulative Core Safety count.
+Retain keeps the Champion; Promote changes it only through the confirmed decision.

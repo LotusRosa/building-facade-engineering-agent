@@ -1,6 +1,6 @@
 [project]
 name = "facade-model-maintenance-agent"
-version = "2.1.0"
+version = "2.2.0"
 description = "Building-Facade Engineering Agent: conversation-first governed visual model maintenance for civil engineers"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}

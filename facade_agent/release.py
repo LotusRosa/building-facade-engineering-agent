@@ -51,6 +51,7 @@ GITHUB_RELEASE_FILES = {
     ".gitignore",
     "ACCUMULATING_GATE_PROTOCOL.md",
     "AGENT_COMPLETE_GPU_HANDOFF.md",
+    "CITATION.cff",
     "LICENSE",
     "pyproject.toml",
     "README.md",
@@ -235,7 +236,8 @@ def build_github_release(*, agent_root: Path, output_dir: Path) -> dict[str, Any
     files = []
     for source in _release_files(agent_root):
         relative = source.relative_to(agent_root)
-        if relative.parts[0] not in GITHUB_RELEASE_DIRECTORIES and relative.as_posix() not in GITHUB_RELEASE_FILES:
+        is_document_asset = len(relative.parts) >= 3 and relative.parts[:2] == ("docs", "assets") and relative.suffix.lower() in {".png", ".jpg", ".jpeg", ".svg", ".md"}
+        if relative.parts[0] not in GITHUB_RELEASE_DIRECTORIES and relative.as_posix() not in GITHUB_RELEASE_FILES and not is_document_asset:
             continue
         files.append((source, relative))
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -29,6 +29,10 @@ class GitHubReleaseTests(unittest.TestCase):
             (agent / "tests" / "test_smoke.py").write_text("def test_smoke(): pass\n", encoding="utf-8")
             (agent / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
             (agent / "README.md").write_text("fixture\n", encoding="utf-8")
+            (agent / "CITATION.cff").write_text("cff-version: 1.2.0\n", encoding="utf-8")
+            (agent / "docs" / "assets").mkdir(parents=True)
+            (agent / "docs" / "assets" / "example.png").write_bytes(b"public-figure")
+            (agent / "docs" / "private-notes.txt").write_text("not for release", encoding="utf-8")
             (agent / "LICENSE").write_text("research license\n", encoding="utf-8")
             (agent / "THIRD_PARTY_NOTICES.md").write_text(
                 "third-party notices\n",
@@ -56,6 +60,9 @@ class GitHubReleaseTests(unittest.TestCase):
             self.assertTrue((release_dir / "facade_training_worker" / "__init__.py").is_file())
             self.assertTrue((release_dir / "tests" / "test_smoke.py").is_file())
             self.assertTrue((release_dir / ".gitignore").is_file())
+            self.assertTrue((release_dir / "CITATION.cff").is_file())
+            self.assertTrue((release_dir / "docs" / "assets" / "example.png").is_file())
+            self.assertFalse((release_dir / "docs" / "private-notes.txt").exists())
             self.assertEqual(
                 (release_dir / "LICENSE").read_text(encoding="utf-8"),
                 "research license\n",

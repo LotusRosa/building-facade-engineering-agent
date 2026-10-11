@@ -7,6 +7,9 @@ from pathlib import Path
 from facade_agent.core.states import BatchState, ProjectState
 from facade_agent.storage import Store, utc_now
 from facade_agent.tools import build_phase1_registry
+from facade_agent.adapters.llm import LLMManager
+from facade_agent.application.agent_runtime import AgentRuntime
+from facade_agent.application.workflow import WorkflowSnapshotService
 
 
 class Phase4AMaintenanceBatchTests(unittest.TestCase):
@@ -81,6 +84,26 @@ class Phase4AMaintenanceBatchTests(unittest.TestCase):
             self.store.create_maintenance_batch(
                 project_id=self.project_id, batch_name="not-ready"
             )
+
+    def test_chat_skips_repeat_annotation_but_confirms_validation_and_freeze(self):
+        self.register_champion_fixture()
+        batch, dataset = self.create_batch_dataset()
+        image = self.add_image(dataset['dataset_id'], 'new.png', '1' * 64)
+        workflow = WorkflowSnapshotService(self.store)
+        runtime = AgentRuntime(self.store, build_phase1_registry(self.store), LLMManager(), workflow)
+        first = runtime.chat(text='continue', project_id=self.project_id, language='en')
+        self.assertEqual(first['status'], 'requires_human_input')
+        self.assertIn('1 unannotated', first['message'])
+        self.store.save_annotation(image_id=image['image_id'], class_ids=[self.classes[0]['class_id']], no_defect=False)
+        ready = runtime.chat(text='continue', project_id=self.project_id, language='en')
+        self.assertEqual(ready['pending']['tool_name'], 'validate_dataset')
+        self.assertEqual(self.store.get_dataset(dataset['dataset_id'])['status'], 'open')
+        runtime.resolve_confirmation(pending_id=ready['pending']['pending_id'], approved=True, language='en')
+        frozen = runtime.chat(text='continue', project_id=self.project_id, language='en')
+        self.assertEqual(frozen['pending']['tool_name'], 'freeze_maintenance_batch')
+        runtime.resolve_confirmation(pending_id=frozen['pending']['pending_id'], approved=True, language='en')
+        self.assertEqual(self.store.get_maintenance_batch(batch['batch_id'])['state'], 'MAINTENANCE_BATCH_FROZEN')
+        self.assertEqual(workflow.get(self.project_id)['next_actions'][0]['action_id'], 'start_failure_discovery')
 
     def test_import_validate_and_human_freeze_do_not_regress_project(self) -> None:
         self.register_champion_fixture()
