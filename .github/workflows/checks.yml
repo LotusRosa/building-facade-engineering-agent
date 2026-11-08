@@ -22,6 +22,8 @@ jobs:
         shell: python
         run: |
           import builtins, sys, unittest
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd()))
           original = builtins.__import__
           def guarded(name, *args, **kwargs):
               if name.split('.')[0] in {'torch','torchvision','numpy','PIL','ultralytics'}:
