@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const nodes=new Map();const doc={documentElement:{},querySelector(s){if(!nodes.has(s))nodes.set(s,{value:'',innerHTML:'',textContent:'',children:[],options:[],selectedOptions:[],querySelectorAll:()=>[],classList:{toggle(){}}});return nodes.get(s);},querySelectorAll:()=>[],addEventListener(){}};
+const ctx=vm.createContext({document:doc,console,structuredClone,crypto:{randomUUID:()=>''},fetch:()=>new Promise(()=>{}),setInterval(){},setTimeout(){}});
+for(const name of ['app','chat'])vm.runInContext(fs.readFileSync('facade_next/static/'+name+'.js','utf8'),ctx);
+assert.equal(vm.runInContext('typeof jobProgressHTML',ctx),'function','Training progress is not implemented');
+vm.runInContext("lang='en';state={projects:[{id:'p',active:null,train_pool:[],eval_pool:[]}],rounds:[{id:'r',project:'p',kind:'initial'}],versions:[],datasets:[],jobs:[{id:'j',round:'r',method:'standard',status:'running',device:'cuda:1',progress:{stage:'preparing',fraction:.25,cached_images:1,total_images:4}}],conversations:[{id:'c',project:'p',messages:[],card:{kind:'status',round:'r',jobs:[{id:'j'}]}}]};projectId='p';conversationId='c';renderChat()",ctx);
+assert.match(doc.querySelector('#chatCard').innerHTML,/<progress/);assert.match(doc.querySelector('#chatCard').innerHTML,/25%/);
+vm.runInContext("state.jobs[0].progress.fraction=.5;renderChat()",ctx);assert.match(doc.querySelector('#chatCard').innerHTML,/50%/,'Polling must update progress while status remains running');
+const evaluation=vm.runInContext("jobProgressHTML({status:'running',progress:{stage:'evaluation',fraction:null}})",ctx);
+assert.match(evaluation,/Evaluation/);assert.doesNotMatch(evaluation,/<progress[^>]*\svalue=/);assert(!evaluation.includes('100%'));
+vm.runInContext("state.jobs[0].status='succeeded';state.jobs[0].progress={stage:'completed',fraction:1,completed_epochs:11,max_epochs:40};renderChat()",ctx);
+assert.match(doc.querySelector('#chatCard').innerHTML,/100%/);assert.match(doc.querySelector('#chatCard').innerHTML,/11/);assert.match(doc.querySelector('#chatCard').innerHTML,/View evaluation results/);
+console.log('Progress UI tests passed (4): real fractional bar, live polling, indeterminate evaluation, completion and results entry');

@@ -1,0 +1,47 @@
+{
+  "schema": "facade_next_worker_v1",
+  "version": "3.0.0",
+  "release_date": "2026-11-08",
+  "target_os": [
+    "Windows 10/11 x64",
+    "Ubuntu Linux x86_64"
+  ],
+  "ui_dependencies": [],
+  "worker_packages": [
+    "torch",
+    "torchvision",
+    "numpy",
+    "Pillow"
+  ],
+  "execution": "explicit --execute; native NVIDIA CUDA BF16; one process per GPU; no automatic CPU/precision/OOM fallback",
+  "reference_source_environment": {
+    "python": "3.12.3",
+    "torch": "2.11.0+cu128",
+    "torchvision": "0.26.0+cu128",
+    "gpu": "dual RTX4090"
+  },
+  "new_adapter_gpu_validation": "pending on both OS",
+  "checkpoint_schema": "facade_next_v1",
+  "initial_model_backbones": [
+    "resnet50",
+    "convnext_tiny",
+    "swin_t"
+  ],
+  "maintenance_tools": [
+    "standard",
+    "asl",
+    "sam",
+    "distill",
+    "hnm",
+    "hem",
+    "head_only",
+    "ewc_replay"
+  ],
+  "automatic_installation": false,
+  "automatic_weight_download": false,
+  "automatic_deployment": false,
+  "user_initiated_environment_wizard": true,
+  "shared_environment_profile": "user home/.facade-agent/environment.json",
+  "live_progress": "read-only cache/work/history/prediction artifacts",
+  "product": "building-facade-engineering-agent"
+}

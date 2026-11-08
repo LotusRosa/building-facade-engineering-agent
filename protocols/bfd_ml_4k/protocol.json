@@ -1,0 +1,22 @@
+{
+  "name": "BFD-ML-4K fixed adaptation protocol",
+  "dataset_url": "https://huggingface.co/datasets/LotusRosa/BFD-ML-4K",
+  "upstream_revision": "81aab6254fe29bdd23d49a36945b1aa2c5ce44c1",
+  "upstream_metadata_sha256": "0975f0c94cefb186783cf6aeb1891468ba6580dfb959719e4ebc6e92ff39ca50",
+  "roles_sha256": "565432ff0dab54cab28da56d26080f0b1752d84e76c03411d3c9a308d772deee",
+  "role_counts": {
+    "core_train": 2000,
+    "diagnosis_a": 300,
+    "diagnosis_b": 300,
+    "final_test": 400,
+    "test0": 400,
+    "test_a": 100,
+    "test_b": 100,
+    "validation": 400
+  },
+  "group_semantics": "Frozen pseudonymous connected acquisition groups; no group crosses roles.",
+  "image_ids_verified": true,
+  "labels_verified": true,
+  "image_blobs_verified_locally": false,
+  "random_split": false
+}

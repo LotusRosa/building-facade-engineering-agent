@@ -1,0 +1,5 @@
+﻿filename,hollow,spalling,crack,no_defect
+image_001.jpg,1,0,0,0
+image_002.jpg,0,1,1,0
+image_003.jpg,0,0,0,1
+image_004.jpg,,,,

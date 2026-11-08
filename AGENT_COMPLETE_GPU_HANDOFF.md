@@ -1,54 +1,9 @@
-# Building-Facade Engineering Agent 2.2 — GPU handoff
+# GPU handoff
 
-The conversation-first governance loop and all four real Worker pipelines are implemented. The advanced workbench is available from the lower-right settings drawer. No production metric or checkpoint is embedded in the source tree.
+Use README.md for chat-first operation and SUPPORTED_ENVIRONMENTS.md for Windows/Ubuntu launch. Worker entry: `python -m facade_next worker --state runtime --device cuda:0 --execute`; add `--job job_ID` to target one queued task. Queue service: `python -m facade_next serve --state runtime --execute-workers --gpus 0` (or0,1 only when desired).
 
-## Supported baseline
+Native BF16 NVIDIA CUDA required. Existing environment is retained. requirements.worker.txt declares API floors; facade_next/worker_manifest.json records the research reference environment and unverified new-adapter status. No automatic install/download, OOM retry, precision/image reduction, CPU training or adoption.
 
-- NVIDIA CUDA compute capability 7.0 or newer
-- at least 5 GiB reported VRAM; 6 GiB or more recommended
-- one visible GPU and one Worker process
-- Python 3.12 and the exact locked dependencies
+Initial: Train/Val/S0; maintenance: new Train/Current Gate, cumulative safety and existing Val attached. Use chat to configure only needed tools, confirm the summarized task, wait for actual results, compare and explicitly adopt/Hold with a reason. Checkpoint schema facade_next_v1 binds preprocessing, ordered classes, thresholds and source/role/parent hashes. Explicit legacy conversion is described in docs/SERVER_VALIDATION.md.
 
-RTX 20-series cards use FP16 with gradient scaling. Newer cards use BF16 when PyTorch reports native support. Input size remains fixed at 768 on every GPU.
-
-## Install and validate
-
-Windows:
-
-```powershell
-Set-Location F:\agent
-.\setup_windows_gpu.ps1 -Python D:\path\to\python.exe -CudaWheel cu124
-```
-
-Linux:
-
-```bash
-cd /path/to/agent
-PYTHON_BIN=python3 CUDA_WHEEL=cu124 ./setup_linux_gpu.sh
-```
-
-The setup installs the locked torchvision environment, downloads the checksum-verified ConvNeXt-Tiny initialization after explicit confirmation, prints Worker diagnostics, and runs a single-GPU smoke check.
-
-## RTX 4090 acceptance
-
-1. Require a passing setup and single-GPU smoke result.
-2. Confirm all four pipeline readiness entries are true.
-3. Complete a small real Initial Champion run and registration.
-   - Before project creation, choose an empty writable models-only folder on the target workstation.
-   - After registration, confirm `<model_id>/checkpoint.<ext>` and `<model_id>/manifest.json` are the only files created for that model.
-   - Recompute the checkpoint and manifest SHA-256 values and compare them with the database record.
-4. Complete one maintenance batch through Failure Discovery and expert review.
-5. Train and register one Challenger.
-   - Confirm the Challenger is a second model directory under the same locked project root.
-   - Confirm its manifest identifies the parent Champion, source batch, taxonomy hash, thresholds, training profile, and checkpoint hash.
-6. Import separate Current Gate and initial Core Safety seed folders, using the
-   project Excel template or built-in annotation. Confirm that incomplete or
-   conflicting labels cannot freeze an evaluation job. Freeze both disjoint
-   cohorts and obtain verified paired evidence. Complete the human decision,
-   then verify that the next round accepts separate Train and a fresh Current
-   Gate, attaches the initial seed plus the completed Gate as Core Safety, and
-   never requests another safety seed.
-7. Exercise Retain and Promote in separate disposable projects.
-8. Verify the audit chain and archive logs plus artifact hashes.
-
-The project model folder must not contain datasets, Gate snapshots, training ZIPs, Worker results, logs, API keys, LLM settings, or the ConvNeXt-Tiny pretrained cache. ConvNeXt-Tiny initialization remains part of the environment configuration and may use the standard torchvision cache outside the project model folder.
+Current development performed only static, model-free workflow/browser and package checks on Windows. Ubuntu execution and all real GPU training/inference/weight conversion tests of the new adapter remain pending. No new training or human-time study was started by this handoff. See docs/LOCAL_VALIDATION.json for the actual local record.

@@ -1,0 +1,82 @@
+{
+  "repository": "LotusRosa/building-facade-engineering-agent",
+  "commit": "dcd90cb551ec3e59b61e8188d998a898437a709b",
+  "read_date": "2026-10-31",
+  "files": [
+    {
+      "path": ".gitignore",
+      "git_blob_sha": "6978f0064f3fff4f8b7b9ed4f35e4ef657841244",
+      "size": 416
+    },
+    {
+      "path": "ACCUMULATING_GATE_PROTOCOL.md",
+      "git_blob_sha": "7759dffc400213c361f966bf1e476bfea6614892",
+      "size": 3511
+    },
+    {
+      "path": "AGENT_COMPLETE_GPU_HANDOFF.md",
+      "git_blob_sha": "8cd22f0e095465d04a1439e4e2c91da9470ad54b",
+      "size": 2958
+    },
+    {
+      "path": "CITATION.cff",
+      "git_blob_sha": "33ea80349c71e325e8fdd9cb996ccaffb3b76962",
+      "size": 745
+    },
+    {
+      "path": "LICENSE",
+      "git_blob_sha": "97ef5d88571c9b95cec30eb065874483fb6fe9e2",
+      "size": 5543
+    },
+    {
+      "path": "README.md",
+      "git_blob_sha": "24334c1855a3cca5037ef58a1a7ea0c3d9f8a0b6",
+      "size": 22088
+    },
+    {
+      "path": "SUPPORTED_ENVIRONMENTS.md",
+      "git_blob_sha": "744613c408e44d0cb80a94341b9f583d56e35244",
+      "size": 1802
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "git_blob_sha": "fa3ef2796a431efd633f76cceb3e0390651babf3",
+      "size": 4496
+    },
+    {
+      "path": "facade_training_worker/requirements.lock",
+      "git_blob_sha": "244e00de448042871aa3df2b970346a6ffb3241f",
+      "size": 238
+    },
+    {
+      "path": "facade_training_worker/worker_manifest.json",
+      "git_blob_sha": "30978f52c7655e20fe18e774e1d60be5ddc6d4dc",
+      "size": 788
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob_sha": "e607dab444a670fb7f62abfe1cb80fce10ace612",
+      "size": 1131
+    },
+    {
+      "path": "run_linux.sh",
+      "git_blob_sha": "1eede3c2c523733fcfe33b921191f72ea6b15fe8",
+      "size": 257
+    },
+    {
+      "path": "run_windows.ps1",
+      "git_blob_sha": "cf40a7502356ecb8d059cdc7b800c0391d47874d",
+      "size": 155
+    },
+    {
+      "path": "setup_linux_gpu.sh",
+      "git_blob_sha": "f261cad1b91aa141158728847b94294cac34e33d",
+      "size": 807
+    },
+    {
+      "path": "setup_windows_gpu.ps1",
+      "git_blob_sha": "2d20768b118e1aacfae853a002bf1f8a835bcd53",
+      "size": 840
+    }
+  ]
+}

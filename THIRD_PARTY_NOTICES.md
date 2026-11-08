@@ -1,79 +1,11 @@
-# Third-Party Notices
+# Third-party software and assets
 
-This document records direct third-party software, pretrained assets, and
-optional external services used by Building-Facade Engineering Agent 2.2.0.
-The input and annotation update was reviewed on 2026-10-11; the pinned GPU
-dependency inventory is unchanged from the 2026-10-05 review.
+The browser service and CSV/XLSX reader use Python's standard library. The optional GPU Worker uses separately installed [PyTorch](https://github.com/pytorch/pytorch/blob/main/LICENSE) (BSD-3-Clause), [TorchVision](https://github.com/pytorch/vision/blob/main/LICENSE) (BSD-3-Clause), [NumPy](https://github.com/numpy/numpy/blob/main/LICENSE.txt) (BSD-3-Clause) and [Pillow](https://github.com/python-pillow/Pillow/blob/main/LICENSE) (HPND). Their own licenses govern those components. Packages, CUDA dependencies and model weights are not bundled in this source release.
 
-The standard source release does not bundle the packages, CUDA runtime, or
-pretrained weights listed below. The optional environment-preparation scripts
-install or download them separately into locations selected or controlled by
-the user. Each third-party component remains subject to its own license and
-terms. The project's `LICENSE` does not replace or restrict those independent
-terms.
+The environment wizard installs dependencies and prepares selected TorchVision ImageNet weights only after the user requests setup. Pretrained assets and source datasets retain their own terms; see [TorchVision model documentation](https://docs.pytorch.org/vision/stable/models.html). This software license grants no additional ImageNet or dataset rights.
 
-## Direct runtime dependencies
+Algorithm/model helpers originate from this project's research tools; hashes and provenance are recorded in docs/SOURCE_PROVENANCE.json. The first-party Academic Research License and author attribution are retained in LICENSE. Citation metadata points to the canonical repository.
 
-The GPU Worker uses the following exact versions from
-`facade_training_worker/requirements.lock`:
+The companion [BFD-ML-4K dataset](https://huggingface.co/datasets/LotusRosa/BFD-ML-4K) has a separate academic-research license. Its images are not included. The shipped role/index mappings correspond to that dataset and the authors' frozen protocol; see docs/BFD_ML_4K.md for revision and integrity information. Optional Hugging Face CLI downloads use its own terms and dependencies.
 
-| Component | Version | Purpose | Upstream license |
-| --- | ---: | --- | --- |
-| [PyTorch](https://github.com/pytorch/pytorch/tree/v2.6.0) | 2.6.0 | Model training and inference | [BSD 3-Clause](https://github.com/pytorch/pytorch/blob/v2.6.0/LICENSE) |
-| [TorchVision](https://github.com/pytorch/vision/tree/v0.21.0) | 0.21.0 | Vision model architecture, transforms, and weight loading | [BSD 3-Clause](https://github.com/pytorch/vision/blob/v0.21.0/LICENSE) |
-| [NumPy](https://github.com/numpy/numpy/tree/v1.26.4) | 1.26.4 | Numerical arrays and calculations | [BSD 3-Clause](https://github.com/numpy/numpy/blob/v1.26.4/LICENSE.txt) |
-| [scikit-learn](https://github.com/scikit-learn/scikit-learn/tree/1.5.1) | 1.5.1 | Clustering and evaluation utilities | [BSD 3-Clause](https://github.com/scikit-learn/scikit-learn/blob/1.5.1/COPYING) |
-| [Pillow](https://github.com/python-pillow/Pillow/tree/10.4.0) | 10.4.0 | Image decoding and processing | [HPND](https://github.com/python-pillow/Pillow/blob/10.4.0/LICENSE) |
-
-License identifiers in this table are summaries for convenience. The linked
-upstream license text controls.
-
-## Development and test dependency
-
-Source-checkout verification uses
-[pytest 7.4.4](https://github.com/pytest-dev/pytest/tree/7.4.4), distributed
-under the [MIT License](https://github.com/pytest-dev/pytest/blob/7.4.4/LICENSE).
-pytest is not required to run the installed Agent interface.
-
-The Excel/CSV annotation reader and template exporter use Python's standard
-library (`csv`, `zipfile`, and `xml.etree.ElementTree`); they do not bundle an
-Excel engine or add a runtime package dependency. An optional development-only
-interoperability test uses an installed copy of
-[openpyxl](https://openpyxl.readthedocs.io/) (MIT License); it is skipped when
-openpyxl is absent. openpyxl is not bundled or needed by the Agent.
-
-## Pretrained initialization
-
-Initial Champion training can use TorchVision's
-`ConvNeXt_Tiny_Weights.IMAGENET1K_V1`. The weights are downloaded separately
-to the user's cache only after environment preparation is confirmed; they are
-not part of the repository or source release.
-
-TorchVision warns that pretrained weights may carry terms or conditions derived
-from the dataset used to train them. Review the
-[TorchVision model documentation](https://docs.pytorch.org/vision/main/models.html)
-and the applicable ImageNet terms before downloading or using the weights. This
-project does not grant rights to those weights or to ImageNet data.
-
-## Optional external model providers
-
-The interface includes configurable endpoint presets for OpenAI, DeepSeek,
-OpenRouter, LM Studio, and Ollama. No provider SDK or provider-owned source code
-is bundled. If an engineer connects one of these services or tools, requests,
-credentials, and submitted text are governed by that provider's current terms,
-privacy policy, and deployment configuration. Provider names and trademarks
-belong to their respective owners.
-
-## Transitive dependencies and redistributed environments
-
-Package installers may resolve additional transitive dependencies, each under
-its own license. Anyone who redistributes a prebuilt virtual environment,
-container image, wheel cache, CUDA runtime, pretrained weight file, or other
-combined binary distribution must independently inventory those contents and
-preserve all required copyright notices, license texts, source offers, and
-attributions. Generating an SBOM and a complete license report is recommended
-for every such distribution.
-
-This notice is an engineering inventory, not legal advice. Review the actual
-upstream terms and obtain legal advice before public or commercial
-redistribution.
+No LLM provider SDK or clustering package is required. Optional LLM requests are governed by the chosen service's terms. Node.js is used only for frontend development checks, and GitHub Actions run model-free checks. Any separately redistributed binary environment requires its own dependency and license inventory.

@@ -1,32 +1,38 @@
-# Supported environments
+# Windows / Ubuntu
 
-Facade Engineering Agent targets computers with NVIDIA GPUs only.
+The browser UI uses Python 3.11+ and its standard library on 64-bit Windows and Ubuntu. Python 3.12 is the recorded reference. No Node.js or ML package is required to open the UI. Node is used only for optional frontend tests.
 
-## Supported operating systems
+| Component | Scope |
+|---|---|
+| Browser UI, chat, SQLite, dataset tables | Same implementation on both operating systems |
+| Windows launch | start_ui.cmd or run_windows.ps1 |
+| Ubuntu launch | bash run_linux.sh or bash start_ui.sh |
+| New training environment | Explicit first-run browser wizard; one shared host folder |
+| Existing environment | Attach through wizard or select the interpreter in launch scripts |
+| Training | NVIDIA CUDA with native BF16; one Worker per GPU |
 
-- Windows 10 or Windows 11, 64-bit
-- 64-bit Linux distributions capable of running a supported NVIDIA driver
+The create-environment wizard currently selects torch 2.11.0 and torchvision 0.26.0 from the CUDA 12.8 wheel index, plus NumPy and Pillow. It checks CUDA/native BF16 rather than automatically solving every GPU/driver combination. NVIDIA driver installation is outside this setup. An existing compatible environment can be attached without replacing its installed packages. API floors in requirements.worker.txt do not imply that every package/OS combination is validated.
 
-macOS, WSL-only GPU setups, AMD GPUs, Intel GPUs, and CPU-only training are outside the supported training scope.
+Recorded Ubuntu initial and Standard adaptation runs used Python 3.12.3, torch 2.11.0+cu128, torchvision 0.26.0+cu128 and one RTX 4090 per job on a dual-card host. The current interface/package was checked locally without model execution. See [validation scope](docs/VALIDATION.md); the full Windows GPU and all-method matrix is not established by these checks.
 
-## Release behavior
+## Launch
 
-The Agent package stays small and does not bundle CUDA, PyTorch, or model weights. On first use it detects the host runtime and, only after an explicit engineer confirmation, runs the platform setup script and downloads pinned, checksum-verified weights into user-owned storage.
+```powershell
+.\run_windows.ps1 -Python "D:\your_environment\python.exe"
+```
 
-On first launch the Agent performs deterministic checks for:
+```bash
+FACADE_PYTHON=/path/to/environment/python bash run_linux.sh
+```
 
-1. supported operating system and architecture;
-2. NVIDIA driver and visible GPU inventory;
-3. sufficient GPU memory, RAM, and disk space;
-4. the Agent-managed CUDA-enabled PyTorch environment;
-5. a short GPU smoke test before training is enabled.
+The setup_windows_gpu.ps1 and setup_linux_gpu.sh helpers inspect the selected interpreter; the browser wizard performs requested dependency installation and weight preparation. Explicit GPU checks import GPU libraries but do not train a model.
 
-The complete CUDA Toolkit is not an application prerequisite. The managed training environment supplies its version-locked runtime dependencies. A compatible NVIDIA driver remains a host prerequisite and is never installed silently.
+Use `python -m facade_next serve --state runtime --ui-only` for a UI/history session without starting saved workers. Without that option, a ready saved profile can enable its configured workers. The service binds loopback only. Remote users can use their own SSH port forwarding.
 
-If checks fail, the interface remains available for diagnosis, but all training actions are blocked. The Agent must show the failing check and remediation guidance rather than falling back to CPU training.
+## Paths and recovery
 
-## Single-GPU policy
+Data paths refer to the Agent host. Keep the original runtime, photo and checkpoint paths when updating on that host. Do not open one writable runtime from two services. Frozen absolute paths are not rewritten when moving between Windows and Ubuntu; see [upgrade instructions](docs/UPGRADING.md).
 
-The production release uses one visible NVIDIA GPU and one worker process. If several GPUs are present, the runtime selects the first available device unless the engineer explicitly chooses another device.
+Initial training requires prepared ImageNet weights. Missing weights produce an explicit error; training does not fall back to random initialization. The wizard can download selected weights after the user requests setup. No automatic CPU/precision/image-size fallback, OOM retry or model adoption is performed. `FACADE_DISABLE_MODEL_EXECUTION=1` disables model execution for a host/session.
 
-At least one NVIDIA GPU with compute capability 7.0 and 5 GiB reported VRAM is required. Training, screening, and paired evaluation all use the same single-GPU contract.
+DeepSeek, OpenAI and compatible LLM connections use the standard library and do not require a GPU. See [LLM setup](docs/LLM_SETUP.md).

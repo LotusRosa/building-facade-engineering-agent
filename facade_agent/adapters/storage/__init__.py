@@ -1,2 +1,0 @@
-"""SQLite storage adapter package."""
-

@@ -1,0 +1,185 @@
+{
+  "source_protocol": "aic_ab_ewc_v2_exploratory_20261030",
+  "methods": {
+    "standard": {
+      "id": "standard",
+      "sampling": "uniform",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      }
+    },
+    "asl": {
+      "id": "asl",
+      "sampling": "uniform",
+      "loss": {
+        "name": "asl",
+        "gamma_pos": 1,
+        "gamma_neg": 4,
+        "clip": 0.05,
+        "detach_focal_weight": true
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      }
+    },
+    "sam": {
+      "id": "sam",
+      "sampling": "uniform",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "sam_adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06,
+        "rho": 0.05
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      }
+    },
+    "distill": {
+      "id": "distill",
+      "sampling": "uniform",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 1.0,
+        "kind": "historical_bernoulli_kl",
+        "temperature": 1.0
+      },
+      "trainable": {
+        "scope": "all"
+      }
+    },
+    "hnm": {
+      "id": "hnm",
+      "sampling": "hard_negatives",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      }
+    },
+    "hem": {
+      "id": "hem",
+      "sampling": "loss_weighted",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      },
+      "mining": {
+        "mode": "offline_parent_probability_bce_clipped",
+        "probability_clip": 1e-07,
+        "weight_exponent": 1.0,
+        "weight_floor": 1e-08
+      }
+    },
+    "head_only": {
+      "id": "head_only",
+      "sampling": "uniform",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "head"
+      }
+    },
+    "ewc_replay": {
+      "id": "ewc_replay",
+      "sampling": "uniform",
+      "loss": {
+        "name": "bce"
+      },
+      "optimizer": {
+        "name": "adamw",
+        "lr": 1e-05,
+        "weight_decay": 0.05,
+        "minimum_lr": 1e-06
+      },
+      "teacher": {
+        "weight": 0
+      },
+      "trainable": {
+        "scope": "all"
+      },
+      "ewc": {
+        "estimator": "marginalized_bernoulli_model_fisher",
+        "lambda": 1.0,
+        "normalization": "mean_over_images_and_three_labels",
+        "sample_policy": "all_ordered_history_ids",
+        "batch_size": 1,
+        "forward_precision": "bf16",
+        "accumulation_precision": "fp32",
+        "model_mode": "eval",
+        "augmentation": false,
+        "bn_buffers_unchanged": true,
+        "restore_rng": true,
+        "penalty_frequency": "once_per_logical_step",
+        "create_graph": false
+      }
+    }
+  }
+}

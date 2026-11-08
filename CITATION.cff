@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: >-
   If you use the Building-Facade Engineering Agent, cite the software by name,
   version, release year, authors, and canonical repository.
-title: "Building-Facade Engineering Agent"
+title: "building-facade-engineering-agent"
 type: software
 repository-code: "https://github.com/LotusRosa/building-facade-engineering-agent"
 url: "https://github.com/LotusRosa/building-facade-engineering-agent"
@@ -15,8 +15,8 @@ contact:
   - family-names: "Chen"
     given-names: "Ruoyu"
     email: "chenruoyu@just.edu.cn"
-version: 2.2.0
-date-released: 2026-10-11
+version: 3.0.0
+date-released: 2026-11-08
 keywords:
   - building facade
   - engineering agent

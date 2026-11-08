@@ -1,0 +1,41 @@
+name: Model-free package checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Check required files and hashes
+        run: python scripts/check_release.py
+      - name: Run standard-library tests without model dependencies
+        shell: python
+        run: |
+          import builtins, sys, unittest
+          original = builtins.__import__
+          def guarded(name, *args, **kwargs):
+              if name.split('.')[0] in {'torch','torchvision','numpy','PIL','ultralytics'}:
+                  raise RuntimeError('Model dependency import blocked: '+name)
+              return original(name, *args, **kwargs)
+          builtins.__import__ = guarded
+          result = unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('tests'))
+          sys.exit(not result.wasSuccessful())
+      - name: Check frontend behavior and syntax
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          for test in sorted(Path('tests').glob('*.js')):
+              subprocess.run(['node', str(test)], check=True)
+          for source in sorted(Path('facade_next/static').glob('*.js')):
+              subprocess.run(['node','--check', str(source)], check=True)

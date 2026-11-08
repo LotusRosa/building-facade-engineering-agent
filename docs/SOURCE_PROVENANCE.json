@@ -1,0 +1,28 @@
+{
+  "toolkit_methods.py": {
+    "source": "server_aic_ab_ewc_v2_20261030\\toolkit_methods.py",
+    "source_sha256": "ae9fec3d8f1247c4fe2b7001c5ddc4a13242c5ec6db8769ead25487d6592278a",
+    "output_sha256": "ae9fec3d8f1247c4fe2b7001c5ddc4a13242c5ec6db8769ead25487d6592278a",
+    "mode": "unchanged"
+  },
+  "ewc.py": {
+    "source": "server_aic_ab_ewc_v2_20261030\\ewc.py",
+    "source_sha256": "bb1311b7837dc72f410d1c128e32fa4131abf9ff9bcf8db8e55d941e91f8fb3e",
+    "extracted_symbols": [
+      "capture_rng",
+      "restore_rng",
+      "model_fisher",
+      "EWCConstraint"
+    ],
+    "output_sha256": "329815ba228f02d20fd391ef16f5d98467f1f7b35360823ccef039600bfe2bdc"
+  },
+  "legacy_engine.py": {
+    "source": "server_aic_ab_ewc_v2_20261030\\legacy_engine.py",
+    "source_sha256": "9dc739f3e1f07818fda4aa680bc124d0c5d1f095f666902127e3410f6babbc9c",
+    "extracted_symbols": [
+      "FullImageClassifier",
+      "_pixels"
+    ],
+    "output_sha256": "8cdd8142001c9a2597a29cbca80b7acf1c7c6e0b554f614b41666dc12fe32960"
+  }
+}

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-python -m facade_agent --check
-exec python -m facade_agent --host "${FACADE_AGENT_HOST:-127.0.0.1}" --port "${FACADE_AGENT_PORT:-8000}"
+cd "$(dirname "$0")"
+PYTHON_BIN="${FACADE_PYTHON:-python3}"
+"$PYTHON_BIN" -m facade_next check
+exec "$PYTHON_BIN" -m facade_next serve --state "${FACADE_STATE:-runtime}" --port "${FACADE_PORT:-8765}" "$@"

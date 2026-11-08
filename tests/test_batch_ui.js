@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const elements=new Map();
+const document={querySelector(s){if(!elements.has(s))elements.set(s,{value:'',querySelectorAll:()=>[],options:[],children:[],classList:{toggle(){}},selectedOptions:[]});return elements.get(s);},querySelectorAll:()=>[],addEventListener(){},documentElement:{}};
+const ctx=vm.createContext({document,console,crypto:{randomUUID:()=>''},setInterval(){},setTimeout(){},fetch:()=>new Promise(()=>{}),structuredClone});
+vm.runInContext(fs.readFileSync('facade_next/static/app.js','utf8'),ctx);vm.runInContext(fs.readFileSync('facade_next/static/chat.js','utf8'),ctx);
+vm.runInContext("state={projects:[{id:'p',active:null}],datasets:[]};projectId='p'",ctx);
+let html=vm.runInContext("cardHTML({kind:'confirm_batch',action:'batch',token:'safe-token',stage:'initial',name:'首轮',summary:{zh:'existing split',en:'existing split'},parts:[{role:'train',folder:'D:/首轮/train',count:20,complete_images:20,partial_images:0,unknown_images:0}]})",ctx);
+assert(html.includes('D:/首轮/train'));assert(html.includes('safe-token'));assert(html.includes('data-chat-cancel-batch'));assert(!html.includes('undefined'));
+html=vm.runInContext("cardHTML({kind:'folder',batch:true,stage:'update',role:'train'})",ctx);
+assert(html.includes('data-chat-form="import_batch"'));assert(html.includes('gate'));assert(html.includes('val'));assert(html.includes('data-chat-form="import_folder"'));
+console.log('Batch UI tests passed (2): role mapping confirmation and conversational batch entry with manual fallback');

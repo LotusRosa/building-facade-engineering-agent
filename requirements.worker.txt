@@ -1,0 +1,9 @@
+# Optional GPU Worker dependencies, NOT needed for the UI.
+# API floors only; GPU compatibility is not certified by these ranges.
+# Keep the existing validated Ubuntu environment; do not install this over it.
+# For a NEW workstation use a separate environment and the official CUDA wheel
+# choice appropriate to that machine. No setup script runs pip automatically.
+torch>=2.6
+torchvision>=0.21
+numpy>=1.26
+Pillow>=10.4
