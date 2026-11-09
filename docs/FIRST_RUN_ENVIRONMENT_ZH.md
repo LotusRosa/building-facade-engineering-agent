@@ -14,3 +14,5 @@
 下载中断时查看日志，恢复网络后重试同一环境目录；已完成依赖和校验通过的缓存会复用。不会为失败任务自动重训。切换共享环境前先完成队列中的训练。
 
 主机配置默认保存在用户目录 `.facade-agent/environment.json`。`--environment-config /absolute/path/environment.json` 可指定独立配置。只看历史或预览时用 `--ui-only`，避免启动已保存配置中的 Worker。
+
+新 Ubuntu 主机创建环境前需安装所选 Python 版本对应的 `python3-venv`；Windows 使用带 venv／ensurepip 的 64 位 Python。固定 CUDA 安装组合以 Python 3.12 为参考，见 [首次部署](FIRST_INSTALL.md)。当前交互 Worker 初始训练为 BF16，与论文精度差异见 [对应关系](MANUSCRIPT_CORRESPONDENCE.md)。

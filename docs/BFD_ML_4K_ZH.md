@@ -19,6 +19,8 @@
 
 ## 下载并准备初始与 A 轮
 
+新电脑请先按 [完整 Windows／Ubuntu 部署命令](FIRST_INSTALL.md) 安装：教程会创建独立下载工具环境并安装 `huggingface_hub==2.4.0`，无需预先具备 `hf` 命令。公开下载无需 Token。准备命令在 Agent 仓库根目录运行。下载原图加默认初始／A 轮副本约需 28 GB，另留环境与训练缓存空间。
+
 使用 [Hugging Face 官方 CLI](https://huggingface.co/docs/huggingface_hub/guides/cli) 下载固定提交。已有 `hf` 命令时：
 
 ```bash

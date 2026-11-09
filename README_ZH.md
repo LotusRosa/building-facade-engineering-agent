@@ -12,6 +12,8 @@
 
 ## 启动
 
+新电脑可按 [完整首次部署教程](docs/FIRST_INSTALL.md) 操作，含 Windows／Ubuntu 的前置工具、数据下载工具安装、固定数据准备及首个项目步骤。浏览器使用期间请保持服务终端开启。
+
 界面需要 Python 3.11 或更高版本，无需预先安装 PyTorch。进入本目录执行：
 
 ```bash
@@ -66,3 +68,7 @@ python scripts/check_release.py
 ```
 
 该命令检查必要文件和发布包哈希，不导入模型或执行训练。验证范围见 [验证记录](docs/VALIDATION.md)。内部 Python 模块名保持 `facade_next`，以兼容现有命令和项目记录。
+
+## 与当前论文的对应关系
+
+数据角色与八种适应策略已核对；仍有一项初始训练精度差异：论文为 FP16 加梯度缩放，当前交互 Worker 为 BF16。普通首轮／A 轮教程不等于整套多种子实验或外部 CUBIT-Det 实验的完整复现。详见 [论文对应与复现范围](docs/MANUSCRIPT_CORRESPONDENCE.md)。

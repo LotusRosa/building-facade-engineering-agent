@@ -21,6 +21,8 @@ The preparation tool pins upstream commit `81aab6254fe29bdd23d49a36945b1aa2c5ce4
 
 ## Download and prepare initial/A-round data
 
+New machine? Use the [complete Windows/Ubuntu installation commands](FIRST_INSTALL.md) first. They create a separate download-tool venv and install `huggingface_hub==2.4.0`; a preinstalled `hf` command is not assumed. Public downloads do not require a token. Run the preparation command from the Agent repository root. The source JPEGs and default prepared copies require approximately 28 GB combined, before environment and training-cache storage.
+
 Using the optional [official Hugging Face CLI](https://huggingface.co/docs/huggingface_hub/guides/cli):
 
 ```bash

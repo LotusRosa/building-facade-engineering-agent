@@ -16,3 +16,5 @@ The create path builds `.venv`, installs the currently configured CUDA 12.8 PyTo
 If a network download fails, inspect the log, restore connectivity, and retry the same folder. Completed dependencies and verified caches are reused. Training jobs are not automatically rerun. Finish queued/running work before switching the shared environment.
 
 The host profile defaults to `.facade-agent/environment.json` under the user's home. `--environment-config /absolute/path/environment.json` selects an isolated profile. For a history-only or UI session, add `--ui-only` to avoid starting Workers from a saved profile. Setup remains a separately requested operation.
+
+On a fresh Ubuntu host, install `python3-venv` for the selected Python version before using the create-environment option. On Windows, use the 64-bit Python installation with venv/ensurepip support. Python 3.12 is the reference for the pinned CUDA wheels; see [first installation](FIRST_INSTALL.md). Initial training currently uses BF16 in this interactive Worker; the manuscript precision difference is documented in [paper correspondence](MANUSCRIPT_CORRESPONDENCE.md).

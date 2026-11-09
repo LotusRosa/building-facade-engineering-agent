@@ -16,3 +16,4 @@ pip_cache/
 *.sqlite3
 *.sqlite3-*
 *.db
+.download-venv/

@@ -66,6 +66,8 @@ The source package contains no model weights, CUDA binaries, training environmen
 
 ## Install and start the Agent
 
+For a new computer, follow the [complete first-install guide](docs/FIRST_INSTALL.md), including host prerequisites, installation of the optional data-download tool, exact Windows/Ubuntu commands, data preparation and the first project. Keep the server terminal open while using the browser.
+
 Clone or extract the source. An editable pip installation is not required to run it from this directory.
 
 ### Ubuntu
@@ -264,6 +266,10 @@ python -m unittest discover -s tests
 ```
 
 Optional frontend checks use Node.js, for example `node tests/test_history_ui.js`. [GitHub Actions](https://github.com/LotusRosa/building-facade-engineering-agent/actions/workflows/checks.yml) runs required-file/hash checks, guarded standard-library tests, and frontend checks on Windows and Ubuntu. These checks do not execute models or certify every GPU/backbone/strategy combination. See [validation scope](docs/VALIDATION.md).
+
+## Relationship to the manuscript
+
+Associated paper: *Agent-Assisted Automation of Model Adaptation for UAV-Based Building Facade Inspection*. The fixed internal data roles and eight adaptation strategies correspond to the paper. **Initial-training precision still differs:** the manuscript specifies FP16 with gradient scaling, whereas the current interactive Worker uses BF16. The public quickstart is not a one-command reproduction of the complete multi-seed benchmark or external CUBIT-Det experiment. See the [correspondence and exact-reproduction limits](docs/MANUSCRIPT_CORRESPONDENCE.md).
 
 ## Technical references
 
