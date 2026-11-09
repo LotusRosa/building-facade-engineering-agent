@@ -1,16 +1,18 @@
-# 一次配置，多项目共用
+# One training environment for all projects
 
-先使用系统现有的 Python 3.11+ 打开 Agent。界面本身不需要 PyTorch；训练环境可在浏览器首次向导或“设置 → 共享训练环境”中配置。
+[中文](FIRST_RUN_ENVIRONMENT_ZH.md)
 
-1. 选择“在新文件夹创建环境”，指定主机上的空文件夹；或选择“接入已有环境”，填写包含 `.venv` 的目录或环境目录。
-2. 指定训练 GPU 编号，例如 `0` 或 `1`。双卡并行才填写 `0,1`，每卡一个独立 Worker。
-3. 勾选需要准备的 ImageNet 主干权重，点击创建或检查。日志显示依赖安装、权重字节进度、校验结果及失败原因。
-4. 出现“共享环境已就绪”后返回聊天，各项目使用此环境。项目数据和模型输出分别保存在项目状态中。
+Open the Agent with the host's Python 3.11+. The UI starts without PyTorch. The first-run wizard, also available under **Settings → Shared training environment**, can create an environment or attach an existing one.
 
-例如，Ubuntu 环境文件夹可为 `/home/test/FacadeAgentEnvironment`，Windows 可为 `D:\FacadeAgentEnvironment`。环境目录、项目状态目录和数据目录分别指定。
+1. Choose **Create an environment in a new folder** and specify a new/empty host folder, or choose **Use an existing environment** and identify the environment directory or its managed parent.
+2. Select GPU indices such as `0` or `1`. Use `0,1` only when separate jobs should run on both cards; each GPU has one Worker.
+3. Select which ImageNet initialization weights to prepare and start setup/checking. The log reports dependency installation, weight bytes, checksum verification, and failures.
+4. When **Shared environment ready** appears, return to chat. Subsequent projects and rounds reuse that profile.
 
-向导创建 `.venv`，使用 CUDA 12.8 的 PyTorch/TorchVision 组合，安装 NumPy/Pillow，并检查 CUDA 与原生 BF16。当前不会自动挑选所有 GPU/驱动版本对应的安装方案，也不安装 NVIDIA 驱动。详细范围见 [支持环境](../SUPPORTED_ENVIRONMENTS.md)。
+Example folders are `/home/test/FacadeAgentEnvironment` on Ubuntu and `D:\FacadeAgentEnvironment` on Windows. Environment, dataset, and project-state directories are distinct choices.
 
-下载中断时查看日志，恢复网络后重试同一环境目录；已完成依赖和校验通过的缓存会复用。不会为失败任务自动重训。切换共享环境前先完成队列中的训练。
+The create path builds `.venv`, installs the currently configured CUDA 12.8 PyTorch/TorchVision pair and NumPy/Pillow, and checks CUDA/native BF16. It does not install the NVIDIA driver or automatically choose an installer for every hardware/driver combination. See [supported environments](../SUPPORTED_ENVIRONMENTS.md).
 
-主机配置默认保存在用户目录 `.facade-agent/environment.json`。`--environment-config /absolute/path/environment.json` 可指定独立配置。只看历史或预览时用 `--ui-only`，避免启动已保存配置中的 Worker。
+If a network download fails, inspect the log, restore connectivity, and retry the same folder. Completed dependencies and verified caches are reused. Training jobs are not automatically rerun. Finish queued/running work before switching the shared environment.
+
+The host profile defaults to `.facade-agent/environment.json` under the user's home. `--environment-config /absolute/path/environment.json` selects an isolated profile. For a history-only or UI session, add `--ui-only` to avoid starting Workers from a saved profile. Setup remains a separately requested operation.

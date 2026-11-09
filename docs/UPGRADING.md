@@ -1,21 +1,25 @@
-# 更新程序并保留项目
+# Update the program while preserving projects
 
-将新程序放在独立目录，保留旧程序、原状态目录、照片与权重。浏览器界面名称统一为 `building-facade-engineering-agent`，内部命令模块保持 `facade_next`。
+[中文](UPGRADING_ZH.md)
 
-## 已使用 facade_next 的项目
+Extract the new software into a separate directory. Retain the original software, runtime, photos, and checkpoints. The public product name is `building-facade-engineering-agent`; existing commands continue to use `facade_next`.
 
-先结束当前请求，避免两个服务同时写同一个状态库。用新版指定原状态目录即可查看已有项目：
+## Existing facade_next projects
+
+Finish active requests and do not run two services against the same writable runtime. Open the original state with the new program:
 
 ```bash
 python -m facade_next serve --state /absolute/path/to/original/runtime --port 8766 --ui-only
 ```
 
-相同主机上的数据和权重路径保持原样。截图使用“已保存任务”读取冻结配置、评估和实际决策，无需重新训练或重新采用。备份状态时应在服务停止且 Worker 完成后复制整个状态目录，而非仅复制数据库。
+Keep the original host's data/checkpoint paths unchanged. Use **Saved tasks** to inspect frozen configuration, existing evaluation, and recorded decisions without retraining or adopting again. For a consistent backup, stop the service after Workers finish and copy the whole runtime, rather than just its database file.
 
-## 更早的 facade_agent 程序
+## Earlier facade_agent implementation
 
-公开仓库旧实现使用 `facade_agent`/`facade_training_worker`、不同数据库与模型格式。它的数据库不能直接当作 `facade_next` 状态库使用；这次更新不提供旧数据库的自动迁移。
+The earlier public code used `facade_agent`/`facade_training_worker` and a different database/model format. Its database is not an interchangeable `facade_next` runtime. This release does not automatically migrate that schema.
 
-旧实现仍可从 [原仓库提交](https://github.com/LotusRosa/building-facade-engineering-agent/tree/dcd90cb551ec3e59b61e8188d998a898437a709b) 获取。若继续旧项目，使用原实现；若使用当前流程，新建独立项目并重新导入已划分数据。权重导入需匹配受支持的合同和预处理，不能只改文件名。Windows 和 Ubuntu 之间也不要直接迁移冻结了绝对路径的任务。
+The complete previous implementation remains at [its original commit](https://github.com/LotusRosa/building-facade-engineering-agent/tree/dcd90cb551ec3e59b61e8188d998a898437a709b). Continue an old project with its original implementation, or create a separate current project and import the verified pre-split data. Checkpoint conversion requires supported contracts, preprocessing, and original role provenance; changing a filename is insufficient. Absolute-path tasks are not silently remapped across Windows and Ubuntu.
 
-当前流程不再要求失败片段聚类与专家审核作为训练前置步骤，策略和输入由工程师根据任务选择。旧界面截图不代表当前界面。
+Current adaptation no longer requires failure-slice clustering and expert slice review before training. It uses the engineer's chosen strategies with independent Val and acceptance data. The previous single-global-Worker restriction is replaced by the selected per-GPU slots. Current classes and annotation semantics are documented in [data preparation](DATA_PREPARATION.md); old dynamic-taxonomy and keyboard-shortcut behavior should not be assumed.
+
+Earlier screenshots remain in Git history. The README now shows actual, newer Ubuntu validation screenshots, with their recording context stated rather than relabeling historical images as newly captured output.

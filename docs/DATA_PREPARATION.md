@@ -1,84 +1,65 @@
-# 普通用户提交数据：先划分，再逐份导入
+# Prepare already-split data
 
-每次提交的数据须由用户提前划分好。Agent 说明各部分用途、逐份接收、检查格式/标签/角色冲突，并组织训练和版本选择；程序与 LLM 都不自动划分、打乱或重排数据。
+[中文](DATA_PREPARATION_ZH.md)
 
-## 初始建模：三份数据
+The engineer supplies data with roles already assigned. Neither the Agent nor its optional LLM randomly divides, shuffles, or reallocates the submitted dataset. Provide paths on the Agent host; browser path submission is not an upload of all images.
 
-| 提交部分 | 用途 | 边界 |
-|---|---|---|
-| Train | 学习模型权重 | 只属于训练角色 |
-| Val | 选择初始检查点、校准阈值 | 不进入权重训练，后续默认沿用 |
-| 初始验收集 S0 | 对初始模型做独立评价 | 不用于训练、挖掘、Fisher或阈值校准；保留为历史验收 |
+## Initial modeling
 
-不要求另外准备论文研究使用的 final test。S0 是工程验收数据，不能因缺少另一份 final test 就把它也用于训练。
-
-可按下面的目录组织；目录名称本身不决定角色，导入时仍需明确选择：
+Supply **Train**, independent **Val**, and initial acceptance **S0**. Train learns weights; Val selects the initial checkpoint and calibrates thresholds; S0 independently evaluates the resulting model. S0 never enters training, mining, Fisher estimation, or calibration. No additional research Final set is required.
 
 ```text
-inspection_initial/
-  train/
-    images/
-    labels.csv   # 或 labels.xlsx
-  val/
-    images/
-    labels.csv
-  safety/
-    images/
-    labels.csv
+initial/
+  train/images/             initial training photos
+  train/labels.csv
+  val/images/               independent validation photos
+  val/labels.csv
+  safety/images/            independent S0 photos
+  safety/labels.csv
 ```
 
-先在对话创建项目，再说“这是初始数据，目录是…”并提交整个 `inspection_initial` 批次目录。Agent会检查现有子目录，展示 Train/Val/S0 对应关系，确认后分别导入，完整标注会跳过重复标注，部分标注会在聊天中接续补充。也可逐份导入子集；不要将含多个批次的项目总目录当作一个 Train 导入。
+Create a project in chat and identify this batch folder. Review the discovered role mapping before confirming imports. Supported aliases also include `training`, `validation`, `s0`, `core_safety`, `test`, and `evaluation`, according to the role. Avoid multiple folders that ambiguously name the same role.
 
-## 后续 A、B、C……轮：默认每轮新增两份
+## Later adaptation rounds
 
-| 本轮提交部分 | 用途 |
-|---|---|
-| 新增 Train | 结合历史训练数据更新实际在役模型 |
-| 本轮验收集 Current Gate | 与历史验收一起，对同一个在役父模型和本轮候选做独立比较 |
-
-例如：
+Each round adds a new Train and a new independent Current Gate. New Val is optional; existing Val, training history, and historical acceptance are attached automatically.
 
 ```text
 round_A/
-  train/
-    images/
-    labels.csv
-  gate/
-    images/
-    labels.csv
-round_B/
-  train/
-    images/
-    labels.csv
-  gate/
-    images/
-    labels.csv
+  train/images/
+  train/labels.csv
+  gate/images/
+  gate/labels.csv
 ```
 
-每轮在对话说“开始新一轮维护”，然后提交对应的一个批次目录（例如 `round_A`）。Agent检查其中已有的 `train` 与 `gate/test`，以及可选 `val`；确认后分别导入。原 Val、历史训练与历史验收由系统沿用，不必重交；如需扩充校准覆盖，可额外提交独立的新 Val，不能拿 Gate 兼作 Val。每轮必须有独立于历史验收的新 Gate，不能只交新 Train 后反复使用旧验收代替。
+Start another maintenance round in chat and submit its batch folder. Repeat for B, C, and subsequent batches. Names do not override the project's actual initial/adaptation stage. Do not submit a parent directory containing several batches as a single Train.
 
-每轮都有训练、验证/校准和独立评价。默认的数据使用关系如下（假设此前各轮已完成评价并确认 Adopt/Hold）：
-
-| 阶段 | 学习权重的数据 | 验证/校准数据 | 独立评价数据 |
+| Stage | Training | Validation/calibration | Independent evaluation |
 |---|---|---|---|
-| 初始 | Train0 | Val0 | S0 |
-| A轮 | TrainA + 历史Train0回放 | 复用Val0，可追加独立ValA | S0 + GateA |
-| B轮 | TrainB + 历史Train0/TrainA回放 | 复用累计Val，可追加独立ValB | S0 + GateA + GateB |
+| Initial | Train0 | Val0 | S0 |
+| A | TrainA + permitted history | Existing Val; optional ValA | S0 + GateA |
+| B | TrainB + permitted history | Accumulated Val; optional ValB | S0 + GateA + GateB |
 
-Gate 承担该轮 test/验收的作用。训练使用本轮 Train 与历史 Train；Val 不参与权重更新，维护时用于监测训练与校准阈值；Gate/S0 只做独立评价。维护使用预设训练预算后的候选，初始训练按 Val 选择检查点。若本轮另交 Val，则实际提交三份 Train/Val/Gate，程序会合并已有 Val 和新 Val，而不是用 Gate 调阈值。
+After completed evaluation and an explicit adopt/Hold decision, a gate joins historical acceptance. Failed unevaluated or cancelled rounds do not accumulate it. Val and acceptance remain protected even when a round is cancelled; they cannot later be reassigned to training. Rollback is a separate operation.
 
-A、B、C 只是批次名称，轮数不固定。下一轮从工程师实际采用的模型权重和阈值继续；Hold 时继续使用原在役模型。只有完成评价并确认 Adopt/Hold，本轮 Gate 才并入累计历史验收。失败未评价或取消不累计；历史验收和 Val 的角色保护仍然保留。回滚与 Hold 分别记录。
+## Label tables
 
-## 如何自行划分
+Use UTF-8 CSV or the first worksheet of XLSX. Tables contain values, not formulas. The current defect classes are `hollow`, `spalling`, and `crack`.
 
-- 不硬编码统一比例，先保证各部分样本量和业务覆盖足够。当前初始三类模型要求 Train 与 Val 中每类都有已知正例和负例；缺类时应补充，不能将空白标签填成 0。
-- 按业务需要隔离建筑/采集来源，避免同图、重复图和相近连拍跨训练、Val、验收。提供稳定的 `group` 字段才能让程序检查建筑/来源组冲突；未提供时，程序只能检查 ID 和内容重复，无法判断不同照片是否属于同一建筑或近似连拍。
-- Gate/S0 应覆盖需要验收的场景与缺陷类别。缺少某类正例时，其 AP 可能未定义，系统展示覆盖情况，不代表该类效果已得到验证。
-- `labels.csv`/`labels.xlsx` 与该子集对应，可使用 `filename,hollow,spalling,crack,no_defect`。1 为阳性，0 为确认阴性，空白为未知；部分标注可继续在聊天中补充。示例表见 `templates/`。
-- Train、Val、验收角色一经登记便受历史角色检查保护，不能把过去的验收照片转作训练。不同操作系统请在各自运行主机上导入实际路径，不直接复制冻结了其他主机路径的运行数据库。
+```csv
+image_id,path,hollow,spalling,crack,scene,group
+photo_001,building_a/001.jpg,,0,1,scene_a,building_a
+```
 
-连续多轮查看和使用这些结果，是工程验收与历史回归检查；不宣称它们是一个从未参与任何选择的最终盲测集。
+`path` is relative to the declared image root, or an absolute path inside it. The legacy `filename,hollow,spalling,crack,no_defect` layout is supported; examples are in [templates](../templates). A `labels.csv` or `labels.xlsx` next to `images/` is detected automatically. Multiple matching tables require explicit selection.
 
-批次可以叫“首轮”“次轮”“第一次采集”或任何其他名称。名称仅作记录，初始/维护由当前实际在役版本决定；已有模型时不能仅凭文件夹叫“首轮”重置初始模型。含多个批次的上级目录会提示选定一个批次，避免合并角色。
+- `1` means present; `0` means confirmed absent; blank/unknown remains unknown.
+- Multiple defect positives are allowed. `no_defect=1` requires explicit zeros for every defect column and is not an extra model category.
+- Partial labels are supported. Each training photo needs at least one known label. Missing labels are not silently made negative.
+- Initial three-class Train and Val must each provide positive and negative support for every class. For supported adaptation with incomplete external labels, unknown outputs stay masked and uncalibratable thresholds can inherit the parent's values.
+- An explicit `image_id` must remain stable. Without one, a content-derived identity is generated. Duplicate IDs/content within a subset and incompatible cross-role overlap are rejected.
+- `scene` identifies evaluation scenes. `group` identifies acquisition/building groups. Keep related images in one role; exact hashes cannot identify every near-duplicate or related acquisition if groups are absent.
 
-本地版目前读取 Agent 运行主机上的现有文件夹，聊天输入路径或使用任务卡提交；这不是浏览器将全部图片上传到服务器的功能。共享环境目录通过首次向导设置，与数据目录和项目状态目录分别管理。
+Complete labels bypass repeat annotation; partial/unannotated photos can continue through the existing annotation controls. The task freezes actual manifests and photo identities. Keep source files and paths stable; the Worker rechecks image hashes.
+
+Use independent runtime directories across hosts. Do not move a Windows task database with frozen Windows paths into Ubuntu and assume its files have been remapped. Shared environment setup is separate from dataset and runtime-directory selection.

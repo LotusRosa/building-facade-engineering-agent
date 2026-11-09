@@ -9,9 +9,9 @@ root = Path(__file__).resolve().parents[1]
 out = root/'dist'
 out.mkdir(exist_ok=True)
 files = []
-for directory,extensions in [('facade_next',{'.py','.json','.html','.js','.css'}),('docs',{'.md','.json'}),('tests',{'.py','.js'}),('templates',{'.csv','.xlsx'}),('protocols',{'.csv','.json','.md'}),('.github',{'.yml','.yaml'})]:
+for directory,extensions in [('facade_next',{'.py','.json','.html','.js','.css'}),('docs',{'.md','.json'}),('docs/assets',{'.png','.jpg','.jpeg'}),('tests',{'.py','.js'}),('templates',{'.csv','.xlsx'}),('protocols',{'.csv','.json','.md'}),('.github',{'.yml','.yaml'})]:
     files += [p for p in (root/directory).rglob('*') if p.is_file() and p.suffix in extensions and '__pycache__' not in p.parts and '.tmp' not in p.parts]
-files += [root/p for p in ('README.md','README_EN.md','LICENSE','CITATION.cff','THIRD_PARTY_NOTICES.md','SUPPORTED_ENVIRONMENTS.md','ACCUMULATING_GATE_PROTOCOL.md','AGENT_COMPLETE_GPU_HANDOFF.md','requirements.worker.txt','pyproject.toml','start_ui.cmd','start_ui.sh','run_windows.ps1','run_linux.sh','setup_windows_gpu.ps1','setup_linux_gpu.sh','.gitignore','.gitattributes','llm.example.env')]
+files += [root/p for p in ('README.md','README_EN.md','README_ZH.md','LICENSE','CITATION.cff','THIRD_PARTY_NOTICES.md','SUPPORTED_ENVIRONMENTS.md','ACCUMULATING_GATE_PROTOCOL.md','AGENT_COMPLETE_GPU_HANDOFF.md','requirements.worker.txt','pyproject.toml','start_ui.cmd','start_ui.sh','run_windows.ps1','run_linux.sh','setup_windows_gpu.ps1','setup_linux_gpu.sh','.gitignore','.gitattributes','llm.example.env')]
 files += [root/'scripts'/p for p in ('server_acceptance.py','make_ui_fixture.py','build_release.py','check_release.py','check_data_archives.py','check_saved_case.py','prepare_bfd_ml_4k.py')]
 def sha(p):
     return hashlib.sha256(p.read_bytes()).hexdigest()

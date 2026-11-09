@@ -1,0 +1,37 @@
+{
+  "screenshots": [
+    {
+      "file": "docs/assets/ui-project-entry.png",
+      "sha256": "eb4050b35ea126a0d048999be41f384b588045b0d939f7d0d212c6076fc698d8",
+      "source": "User-supplied screenshot of recorded Ubuntu validation",
+      "context": "Chat-first project entry from the recorded Ubuntu session.",
+      "content_edited": false,
+      "rescaled": false
+    },
+    {
+      "file": "docs/assets/ui-shared-environment.png",
+      "sha256": "097590139c205e75e9a5ceb548b71f71a0dd5e943060b5c66d623c897f1e9df1",
+      "source": "User-supplied screenshot of recorded Ubuntu validation",
+      "context": "First-run shared training environment wizard on Ubuntu.",
+      "content_edited": false,
+      "rescaled": false
+    },
+    {
+      "file": "docs/assets/ui-adaptation-configuration.png",
+      "sha256": "06098a5a60adfe5a21a6d2708d61d39013f0ffc6adb4236a0213d896a7c50f58",
+      "source": "User-supplied screenshot of recorded Ubuntu validation",
+      "context": "ConvNeXt-Tiny, seed20260921, Round-A training300 and gate100 from the real task.",
+      "content_edited": false,
+      "rescaled": false
+    },
+    {
+      "file": "docs/assets/ui-candidate-evaluation.png",
+      "sha256": "60f7fe21ccfd011dc6198dd3cfc053f460742548fe40f332f3654482c3fea208",
+      "source": "User-supplied screenshot of recorded Ubuntu validation",
+      "context": "Real Round-A parent/candidate results; no adoption decision is implied by the selected form option.",
+      "content_edited": false,
+      "rescaled": false
+    }
+  ],
+  "note": "Recorded session uses earlier Facade Agent branding and Standard training and update wording; current labels are described in README. Not newly rerun experiments."
+}

@@ -42,6 +42,9 @@ REQUIRED = [name for name in REQUIRED if not name.startswith('docs/')]
 REQUIRED += ['.gitattributes','.github/workflows/checks.yml','docs/DATA_PREPARATION.md','docs/FIRST_RUN_ENVIRONMENT.md','docs/LLM_SETUP.md','docs/UPGRADING.md','docs/BFD_ML_4K.md','docs/SERVER_VALIDATION.md','docs/SERVER_SCREENSHOTS_CN.md','docs/GITHUB_PARITY.md','docs/GITHUB_BASELINE_FILES.json','docs/SOURCE_PROVENANCE.json','docs/VALIDATION.md','scripts/prepare_bfd_ml_4k.py','tests/test_dataset_bridge.py','protocols/bfd_ml_4k/roles.csv','protocols/bfd_ml_4k/protocol.json']
 
 
+REQUIRED += ['README_ZH.md','docs/README_COVERAGE.md','docs/SERVER_SCREENSHOTS.md','docs/assets/SCREENSHOT_SOURCES.json','docs/assets/ui-project-entry.png','docs/assets/ui-shared-environment.png','docs/assets/ui-adaptation-configuration.png','docs/assets/ui-candidate-evaluation.png']
+
+
 def check(root):
     root=Path(root).resolve()
     errors=['Missing '+name for name in REQUIRED if not (root/name).is_file()]

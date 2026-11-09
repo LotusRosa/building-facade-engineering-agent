@@ -1,7 +1,7 @@
 [project]
 name = "building-facade-engineering-agent"
 version = "3.0.0"
-description = "Lightweight facade model engineering workflow with optional LLM chat"
+description = "A chat-driven, human-supervised agent for building-facade model training, adaptation, evaluation, and version management."
 requires-python = ">=3.11"
 dependencies = []
 license = {file = "LICENSE"}
