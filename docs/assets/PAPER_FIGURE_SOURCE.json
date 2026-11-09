@@ -1,0 +1,10 @@
+{
+  "source": "Current manuscript, Figure 1 (fig/1.png)",
+  "caption": "Architecture and workflow of the Engineering Agent for inspection-model adaptation.",
+  "width": 6000,
+  "height": 3909,
+  "source_sha256": "70100ce4da887c825ee4caa456832dbbe820b66e658e13c3e959bf34006d4c27",
+  "published_sha256": "6e51828cde21d194a7044507ba7da15403d2735c6ea22b107f1abbc2c65f1a62",
+  "decoded_scanline_sha256": "984190036529b54cc514e8dc032e71b037d0c84bffddfcb238f7aff1051eb9d9",
+  "processing": "Lossless PNG IDAT recompression only; dimensions, decoded image data and all non-IDAT chunks preserved."
+}

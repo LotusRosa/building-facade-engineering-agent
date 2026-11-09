@@ -1,5 +1,7 @@
 # building-facade-engineering-agent
 
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?labelColor=2D333B)](https://huggingface.co/datasets/LotusRosa/BFD-ML-4K)
+
 [中文说明](README_ZH.md) · [Companion dataset](https://huggingface.co/datasets/LotusRosa/BFD-ML-4K) · [Windows / Ubuntu checks](https://github.com/LotusRosa/building-facade-engineering-agent/actions/workflows/checks.yml)
 
 A chat-driven, human-supervised agent for initial training, adaptation, evaluation, and version management of building-facade defect classifiers. Engineers supply labeled data, choose training strategies, and decide which model to adopt. The Agent coordinates the corresponding local tasks and preserves their configurations, results, and lineage.
@@ -21,15 +23,7 @@ The task is image-level multi-label screening of `hollow`, `spalling`, and `crac
 
 Four modules connect the workflow: **Workflow Control**, **Model Development**, **Candidate Evaluation**, and **Project State Management**.
 
-```mermaid
-flowchart TD
-    A[Engineer supplies pre-split labeled data] --> B[Workflow Control: review and freeze task]
-    B --> C[Model Development: initial training or adaptation]
-    C --> D[Candidate Evaluation: metrics and resource records]
-    D --> E[Engineer reviews and confirms a model decision]
-    E --> F[Project State Management: active version and history]
-    F --> B
-```
+![Architecture and workflow of the Engineering Agent for inspection-model adaptation (manuscript Figure 1)](docs/assets/agent-paper-framework.png)
 
 Initial construction uses **Train + independent Val + initial acceptance S0**. Each later round supplies **new Train + independent Current Gate**; existing Val is reused and additional Val is optional. After completed evaluation and an explicit adopt/Hold decision, the new gate joins historical acceptance for subsequent rounds. There is no fixed limit on the number of rounds.
 

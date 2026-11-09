@@ -1,8 +1,14 @@
 # building-facade-engineering-agent
 
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?labelColor=2D333B)](https://huggingface.co/datasets/LotusRosa/BFD-ML-4K)
+
 通过聊天完成建筑外立面图像级多标签模型的初始建模、后续适应训练、评估与版本管理。Windows 和 Ubuntu 使用同一套浏览器界面；项目保存在运行 Agent 的主机上。
 
 [English](README.md) · [GitHub](https://github.com/LotusRosa/building-facade-engineering-agent) · [配套数据与固定划分](docs/BFD_ML_4K.md)
+
+## 工作流程
+
+![论文图 1：工程 Agent 的架构与模型适应流程](docs/assets/agent-paper-framework.png)
 
 ## 启动
 

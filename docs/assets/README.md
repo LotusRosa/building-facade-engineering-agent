@@ -5,3 +5,7 @@ The four PNGs are the user's original screenshots from the newer, real Ubuntu va
 The session used the green chat/sidebar interface, shared environment wizard, and initial/Standard adaptation workflow. Its branding and strategy captions precede the latest naming cleanup. The result screenshot shows a review form; it does not establish a final model decision.
 
 They replace the earlier public gallery built around Failure Slice discovery/review. They are documentation illustrations, not the native 2600-pixel historical-panel exports requested for the paper. Those must be exported from the same real server project as described in [saved-task instructions](../SERVER_SCREENSHOTS.md).
+
+## Manuscript architecture figure
+
+`agent-paper-framework.png` is Figure 1 from the current manuscript. It retains the original 6000 x 3909 pixels, with lossless PNG compression only. `PAPER_FIGURE_SOURCE.json` records the source hash, published hash and decoded scanline hash.
