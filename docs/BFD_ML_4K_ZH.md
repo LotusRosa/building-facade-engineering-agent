@@ -24,7 +24,7 @@
 使用 [Hugging Face 官方 CLI](https://huggingface.co/docs/huggingface_hub/guides/cli) 下载固定提交。已有 `hf` 命令时：
 
 ```bash
-hf download LotusRosa/BFD-ML-4K --repo-type dataset \
+hf download LotusRosa/BFD-ML-4K data/ metadata/all_samples.csv metadata/dataset_manifest.json LICENSE CITATION.cff --repo-type dataset \
   --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 \
   --local-dir /absolute/path/BFD-ML-4K
 
@@ -40,3 +40,5 @@ Windows PowerShell 中可将每条命令写成一行，并使用 `D:\Datasets\BF
 准备完成后，在 Agent 中依次提交 `FacadeAgentData/initial` 和 `FacadeAgentData/round_A`，按导入卡片核对数量。这是读取已有固定协议；普通用户的数据仍由用户自行划分。
 
 本地元数据核对没有下载或解码全部图片。转换工具会在用户已下载的数据上逐张校验真实文件；只有成功收据才能说明所选输出图片通过哈希检查。
+
+下载命令仅选择固定提交中的 `data/`、必要元数据及许可证／引用文件，不下载其中的历史 README、工具或说明图片。操作说明以当前 Agent 仓库为准。

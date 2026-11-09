@@ -26,7 +26,7 @@ New machine? Use the [complete Windows/Ubuntu installation commands](FIRST_INSTA
 Using the optional [official Hugging Face CLI](https://huggingface.co/docs/huggingface_hub/guides/cli):
 
 ```bash
-hf download LotusRosa/BFD-ML-4K --repo-type dataset \
+hf download LotusRosa/BFD-ML-4K data/ metadata/all_samples.csv metadata/dataset_manifest.json LICENSE CITATION.cff --repo-type dataset \
   --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 \
   --local-dir /absolute/path/BFD-ML-4K
 
@@ -42,3 +42,5 @@ The standard-library conversion tool reads the fixed roles, checks metadata and 
 Submit `FacadeAgentData/initial`, then `FacadeAgentData/round_A`, through chat and review the reported counts. This is preparation of an existing research protocol; other users must supply their own already-split data.
 
 The local correspondence audit compared metadata without downloading or decoding every image. Running the tool on a downloaded corpus verifies the selected actual file bytes; its successful receipt is the evidence for those output files.
+
+The download commands deliberately select only `data/`, required metadata and license/citation files from the immutable image revision. Its historical README, tools and documentation figures are not downloaded. Current instructions remain in this Agent checkout.

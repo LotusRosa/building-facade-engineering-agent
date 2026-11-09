@@ -22,7 +22,7 @@ To use your own already-split data, skip the next block. To use the public corpu
 ```bash
 python3 -m venv .download-venv
 .download-venv/bin/python -m pip install huggingface_hub==2.4.0
-.download-venv/bin/hf download LotusRosa/BFD-ML-4K --repo-type dataset --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 --local-dir "$HOME/FacadeAgentDownloads/BFD-ML-4K"
+.download-venv/bin/hf download LotusRosa/BFD-ML-4K data/ metadata/all_samples.csv metadata/dataset_manifest.json LICENSE CITATION.cff --repo-type dataset --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 --local-dir "$HOME/FacadeAgentDownloads/BFD-ML-4K"
 python3 scripts/prepare_bfd_ml_4k.py --dataset-root "$HOME/FacadeAgentDownloads/BFD-ML-4K" --output "$HOME/FacadeAgentData"
 ```
 
@@ -48,7 +48,7 @@ For the public corpus, run the following from the repository root. These command
 ```powershell
 py -3.12 -m venv .download-venv
 .\.download-venv\Scripts\python.exe -m pip install huggingface_hub==2.4.0
-.\.download-venv\Scripts\hf.exe download LotusRosa/BFD-ML-4K --repo-type dataset --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 --local-dir "$env:USERPROFILE\FacadeAgentDownloads\BFD-ML-4K"
+.\.download-venv\Scripts\hf.exe download LotusRosa/BFD-ML-4K data/ metadata/all_samples.csv metadata/dataset_manifest.json LICENSE CITATION.cff --repo-type dataset --revision 81aab6254fe29bdd23d49a36945b1aa2c5ce44c1 --local-dir "$env:USERPROFILE\FacadeAgentDownloads\BFD-ML-4K"
 py -3.12 scripts/prepare_bfd_ml_4k.py --dataset-root "$env:USERPROFILE\FacadeAgentDownloads\BFD-ML-4K" --output "$env:USERPROFILE\FacadeAgentData"
 py -3.12 -m facade_next serve --state runtime --port 8765
 ```
@@ -73,3 +73,5 @@ If a corpus download is interrupted, repeat the same `hf download` command and d
 If the browser runs on another computer, `127.0.0.1` refers to that browser's computer. For SSH access, run `ssh -N -L 8765:127.0.0.1:8765 user@server` on that computer and open the local URL there. Keep the service bound to loopback.
 
 The documentation audit checked anonymous image download endpoints with HEAD requests, package availability and model-free startup. It did not redownload the complete corpus or reinstall GPU dependencies. Full GPU acceptance remains a [target-host check](SERVER_VALIDATION.md).
+
+The download commands deliberately select only `data/`, required metadata and license/citation files from the immutable image revision. Its historical README, tools and documentation figures are not downloaded. Current instructions remain in this Agent checkout.
