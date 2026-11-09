@@ -14,7 +14,7 @@ The task is image-level multi-label screening of `hollow`, `spalling`, and `crac
 - Initial modeling from ImageNet-pretrained weights, followed by repeated adaptation from the actual active model.
 - Explicit review of data roles and training settings before execution, and an engineer's reason and confirmation before adoption or retention.
 - Independent evaluation on the current gate and accumulated historical acceptance sets.
-- Three backbones and eight selectable adaptation strategies, without a mandatory failure-slice discovery stage.
+- Three backbones and eight selectable adaptation strategies.
 - One shared training environment for multiple projects and one independent Worker per selected GPU.
 - SQLite audit records, immutable task snapshots, checksums, calibrated thresholds, and model-parent relationships.
 - Optional DeepSeek, OpenAI, or compatible LLM connections. The deterministic workflow remains available without an API key.
@@ -29,7 +29,7 @@ Initial construction uses **Train + independent Val + initial acceptance S0**. E
 
 ## Interface walkthrough
 
-These newer screenshots were supplied during the actual Ubuntu validation session and replace the earlier Failure Slice interface illustrations. Original pixels and resolutions are retained. The recorded session uses the earlier **Facade Agent** branding and **Standard training and update** label; current labels are **building-facade-engineering-agent** and **Standard · Adaptation**. The screenshots are workflow records, rather than newly rerun experiments.
+These screenshots document the actual Ubuntu validation session. Original pixels, labels and resolutions are retained; they are recorded workflow evidence. Current controls use **Core · Initial modeling** and **Standard · Adaptation**.
 
 ### Conversation-first project entry
 
@@ -179,7 +179,7 @@ round_A/
 
 ### 2. Review the parent and select strategies
 
-The task binds the actual active parent checkpoint and thresholds. Choose **Standard · Adaptation** or the required alternative strategies. Each candidate in a round shares the same parent and role assignment. Failure-slice discovery, clustering, and expert slice review are not prerequisites in the current workflow.
+The task binds the actual active parent checkpoint and thresholds. Choose **Standard · Adaptation** or the required alternative strategies. Each candidate in a round shares the same parent and role assignment.
 
 | Interface entry | Method ID | Purpose |
 |---|---|---|
@@ -278,7 +278,7 @@ Associated paper: *Agent-Assisted Automation of Model Adaptation for UAV-Based B
 - [Data preparation](docs/DATA_PREPARATION.md), [first-run setup](docs/FIRST_RUN_ENVIRONMENT.md), and [LLM setup](docs/LLM_SETUP.md)
 - [Dataset revision and protocol](docs/BFD_ML_4K.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
-- [Coverage of the previous README](docs/README_COVERAGE.md) and [published-file correspondence](docs/GITHUB_PARITY.md)
+- [User-guide index](docs/USER_GUIDE_INDEX.md) and [package contents](docs/PACKAGE_CONTENTS.md)
 
 ## Citation
 
